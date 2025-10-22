@@ -1,7 +1,21 @@
+try:
+    import cv2
+    _cv2_import_error = None
+except Exception as e:
+    cv2 = None
+    _cv2_import_error = e
 
-import cv2
-import time
+def ensure_cv2_available():
+    if cv2 is None:
+        raise RuntimeError(
+            "OpenCV (cv2) failed to import. Likely missing system libraries (libGL.so.1). "
+            "Install libgl1 (or libgl1-mesa-glx) and related packages: "
+            "sudo apt install -y libgl1 libsm6 libxext6 libxrender1. "
+            f"Original error: {_cv2_import_error}"
+        )
+
 from threading import Lock
+import time
 
 class Camera:
     def __init__(self, width=1280, height=720):
@@ -91,8 +105,8 @@ class Camera:
 _camera_instance = None
 _camera_lock = Lock()
 
-def get_camera_instance():
-    """Provides a global singleton camera instance."""
+def get_camera_instance(*args, **kwargs):
+    ensure_cv2_available()
     global _camera_instance
     with _camera_lock:
         if _camera_instance is None:

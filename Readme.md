@@ -53,7 +53,12 @@ To run the application in a local development environment, follow these steps:
     ```bash
     pip install -r requirements.txt
     ```
-
+    Install required system libs (OpenCV's native library (libGL.so.1) is missing)
+    ``` sudo apt update
+    sudo apt install -y libgl1 libsm6 libxext6 libxrender1
+    # if libgl1 isn't found, try:
+    # sudo apt install -y libgl1-mesa-glx
+    ```
 3.  **Run the Server:** Start the Flask development server.
     ```bash
     ./devserver.sh

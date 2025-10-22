@@ -1,15 +1,15 @@
 from flask import Blueprint, jsonify, request, Response, send_from_directory, send_file
-import json
 import os
-import datetime
-import psutil
-import socket
-import time
-from src.camera import get_camera_instance
-import threading
-import io
-import zipfile
 import re
+import io
+import time
+import json
+import zipfile
+import socket
+import psutil
+import threading
+import datetime
+from src.camera import get_camera_instance
 
 api = Blueprint('api', __name__)
 
@@ -174,18 +174,23 @@ def download_package(log_id):
     if not os.path.exists(video_path):
         return jsonify({'status': 'Video file is missing from disk'}), 404
 
+    # Build human readable log text
     log_string = "Test Log Details\n==================\n"
     display_data = log_data.copy()
 
-    # Format time and duration for display
+    # Format time and duration nicely
     for key, value in display_data.items():
         if key in ['time', 'end_time'] and value:
             try:
-                display_data[key] = datetime.datetime.fromisoformat(value).strftime("%Y-%m-%d %H:%M:%S")
-            except (ValueError, TypeError):
-                display_data[key] = value # Fallback to original
-        elif key == 'duration':
-            display_data[key] = format_duration(value)
+                dt = datetime.datetime.fromisoformat(value)
+                display_data[key] = dt.strftime("%Y-%m-%d %H:%M:%S")
+            except Exception:
+                pass
+        elif key == 'duration' and value is not None:
+            try:
+                display_data[key] = format_duration(int(value))
+            except Exception:
+                pass
 
     for key, value in display_data.items():
         if key in ['video_filename', 'video_path', 'id']:
@@ -202,8 +207,8 @@ def download_package(log_id):
         try:
             dt_obj = datetime.datetime.fromisoformat(time_str)
             safe_time = dt_obj.strftime("%Y%m%d_%H%M%S")
-        except ValueError:
-             safe_time = time_str.replace(':', '-').replace(' ', '_')
+        except Exception:
+            safe_time = time_str.replace(':', '-').replace(' ', '_')
 
     download_filename = f"{safe_sample_code}_{safe_time}.zip"
 
@@ -219,6 +224,64 @@ def download_package(log_id):
         download_name=download_filename,
         mimetype='application/zip'
     )
+
+@api.route('/download/video/<int:log_id>')
+def download_video(log_id):
+    """
+    Serve MP4 with Range support so browsers can stream/seek.
+    """
+    logs = read_logs()
+    log_data = next((l for l in logs if l.get('id') == log_id), None)
+    if not log_data:
+        return jsonify({'status': 'Log not found'}), 404
+
+    video_filename = get_video_filename_from_log(log_data)
+    if not video_filename:
+        return jsonify({'status': 'Video file reference not found in log'}), 404
+
+    video_path = os.path.join(LOGS_DIR, video_filename)
+    if not os.path.exists(video_path):
+        return jsonify({'status': 'Video file is missing from disk'}), 404
+
+    file_size = os.path.getsize(video_path)
+    range_header = request.headers.get('Range', None)
+
+    if not range_header:
+        # no Range header -> full response (ok for direct download)
+        return send_file(video_path, as_attachment=False, download_name=video_filename, mimetype='video/mp4', conditional=True)
+
+    # parse Range header "bytes=start-end"
+    m = re.match(r'bytes=(\d+)-(\d*)', range_header)
+    if not m:
+        return Response(status=416)
+
+    start = int(m.group(1))
+    end = int(m.group(2)) if m.group(2) else file_size - 1
+    if end >= file_size:
+        end = file_size - 1
+    if start > end:
+        return Response(status=416)
+
+    length = end - start + 1
+
+    def generate():
+        with open(video_path, 'rb') as f:
+            f.seek(start)
+            remaining = length
+            chunk_size = 8192
+            while remaining > 0:
+                read_size = min(chunk_size, remaining)
+                data = f.read(read_size)
+                if not data:
+                    break
+                remaining -= len(data)
+                yield data
+
+    rv = Response(generate(), status=206, mimetype='video/mp4')
+    rv.headers.add('Content-Range', f'bytes {start}-{end}/{file_size}')
+    rv.headers.add('Accept-Ranges', 'bytes')
+    rv.headers.add('Content-Length', str(length))
+    return rv
 
 @api.route('/camera/feed')
 def camera_feed():
