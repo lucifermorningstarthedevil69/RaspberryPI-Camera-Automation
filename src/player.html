@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Video Player</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        video {
+            width: 100%;
+            max-width: 1200px;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <video id="video-player" controls autoplay playsinline>
+        <!-- Source will be set dynamically by JavaScript -->
+        Your browser does not support the video tag.
+    </video>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const videoPlayer = document.getElementById('video-player');
+            const pathParts = window.location.pathname.split('/');
+            const filename = pathParts[pathParts.length - 1];
+
+            if (filename) {
+                const videoSource = document.createElement('source');
+                // Use the existing /videos/ route to serve the video file
+                videoSource.setAttribute('src', `/videos/${filename}`);
+                
+                // Determine type from file extension
+                const extension = filename.split('.').pop();
+                if (extension === 'mp4') {
+                    videoSource.setAttribute('type', 'video/mp4');
+                } else if (extension === 'webm') {
+                    videoSource.setAttribute('type', 'video/webm');
+                } // Add other video types if needed
+
+                videoPlayer.appendChild(videoSource);
+                videoPlayer.load();
+            } else {
+                console.error('No video filename found in URL.');
+            }
+        });
+    </script>
+</body>
+</html>
