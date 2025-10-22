@@ -1,7 +1,7 @@
 # Conductor Damage Testing Tool
 
 Circuit Diagram
-![circuit](/circuit_image.png)
+![circuit](/screenshots/circuit_image.png)
 
 ## Overview
 
@@ -75,3 +75,8 @@ The application exposes several API endpoints to control its functionality:
 - `GET /api/camera/feed`: Provides the live MJPEG video stream.
 - `POST /api/camera/release`: Releases the front-end's reference to the camera, allowing it to turn off if not otherwise in use.
 - `GET /api/stats`: Provides real-time system performance data.
+
+## Screenshots
+![indexpage](/screenshots/index.png)
+![SystemInfo](/screenshots/sys%20info.png)
+![TestHistory](/screenshots/test%20history.png)
