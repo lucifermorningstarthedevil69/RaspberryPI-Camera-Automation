@@ -48,6 +48,10 @@ To run the application in a local development environment, follow these steps:
     ```bash
     source .venv/bin/activate
     ```
+    or
+    ```
+    source /home/pi/RaspberryPI-Camera-Automation/virt/bin/activate
+    ```
 
 2.  **Install Dependencies:** Install all the required Python packages.
     ```bash

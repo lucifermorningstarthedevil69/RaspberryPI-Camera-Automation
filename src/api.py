@@ -1,15 +1,16 @@
 from flask import Blueprint, jsonify, request, Response, send_from_directory, send_file
-import os
-import re
-import io
-import time
 import json
-import zipfile
-import socket
-import psutil
-import threading
+import os
 import datetime
+import psutil
+import socket
+import time
 from src.camera import get_camera_instance
+from src.ir_sensor import IRSensorMonitor
+import threading
+import io
+import zipfile
+import re
 
 api = Blueprint('api', __name__)
 
@@ -30,8 +31,20 @@ psutil.cpu_percent(interval=None)
 active_tests = {}
 lock = threading.Lock()
 
+# Assuming the IR sensor is connected to BCM pin 17
+IR_SENSOR_PIN = 17
+ir_monitor = IRSensorMonitor(sensor_pin=IR_SENSOR_PIN)
 
 # --- Helper Functions ---
+def get_cpu_temperature():
+    """Reads the CPU temperature from the system file on a Raspberry Pi."""
+    try:
+        with open("/sys/class/thermal/thermal_zone0/temp", "r") as f:
+            temp_milli_celsius = int(f.read().strip())
+            return temp_milli_celsius / 1000.0
+    except (FileNotFoundError, ValueError):
+        return None
+
 def read_logs():
     if not os.path.exists(LOGS_FILE):
         return []
@@ -60,11 +73,14 @@ def get_video_filename_from_log(log):
         return os.path.basename(log['video_path'])
     return None
 
-def stop_test_internally(log_id, status):
+def stop_test_internally(log_id, status, reason=None):
     with lock:
         if log_id not in active_tests:
             return
         test_info = active_tests.pop(log_id)
+
+        ir_monitor.stop_monitoring()
+
         if 'timer' in test_info and test_info['timer'].is_alive():
             test_info['timer'].cancel()
         if 'stop_event' in test_info:
@@ -77,6 +93,8 @@ def stop_test_internally(log_id, status):
             if log.get('id') == log_id and log['status'] == 'Running':
                 log['status'] = status
                 log['end_time'] = datetime.datetime.now(IST).isoformat()
+                if reason:
+                    log['failure_reason'] = reason
                 break
         write_logs(logs)
 
@@ -103,6 +121,10 @@ def start_test():
         'video_filename': video_filename
     }
 
+    def handle_inactivity():
+        print(f"Inactivity detected, stopping test {log_id}.")
+        stop_test_internally(log_id, 'Fail', reason='Weight Fallen Down!')
+
     camera = get_camera_instance()
     stop_event = threading.Event()
     recording_thread = threading.Thread(target=camera.start_recording, args=(video_path, stop_event))
@@ -121,6 +143,7 @@ def start_test():
 
     recording_thread.start()
     timer.start()
+    ir_monitor.start_monitoring(callback=handle_inactivity)
 
     return jsonify({'status': 'Test started', 'log': new_log})
 
@@ -174,30 +197,54 @@ def download_package(log_id):
     if not os.path.exists(video_path):
         return jsonify({'status': 'Video file is missing from disk'}), 404
 
-    # Build human readable log text
     log_string = "Test Log Details\n==================\n"
-    display_data = log_data.copy()
 
-    # Format time and duration nicely
-    for key, value in display_data.items():
-        if key in ['time', 'end_time'] and value:
-            try:
-                dt = datetime.datetime.fromisoformat(value)
-                display_data[key] = dt.strftime("%Y-%m-%d %H:%M:%S")
-            except Exception:
-                pass
-        elif key == 'duration' and value is not None:
-            try:
-                display_data[key] = format_duration(int(value))
-            except Exception:
-                pass
+    # Time
+    time_str = log_data.get('time')
+    if time_str:
+        try:
+            time_str = datetime.datetime.fromisoformat(time_str).strftime("%Y-%m-%d %H:%M:%S")
+        except (ValueError, TypeError):
+            pass # keep original
+    log_string += f"Time: {time_str or 'N/A'}\n"
 
-    for key, value in display_data.items():
-        if key in ['video_filename', 'video_path', 'id']:
-            continue
-        display_key = key.replace('_', ' ').title()
-        display_value = value if value is not None else 'N/A'
-        log_string += f"{display_key}: {display_value}\n"
+    # Sample Code
+    log_string += f"Sample Code: {log_data.get('sample_code', 'N/A')}\n"
+
+    # Duration
+    log_string += "Duration:\n"
+    set_duration = log_data.get('duration')
+    if set_duration is not None:
+        log_string += f"  Set Duration: {format_duration(set_duration)}\n"
+    else:
+        log_string += "  Set Duration: N/A\n"
+
+    # Actual Duration (if applicable)
+    status = log_data.get('status')
+    if status == 'Fail' and log_data.get('time') and log_data.get('end_time'):
+        try:
+            start_dt = datetime.datetime.fromisoformat(log_data['time'])
+            end_dt = datetime.datetime.fromisoformat(log_data['end_time'])
+            actual_duration_seconds = int((end_dt - start_dt).total_seconds())
+            log_string += f"  Actual Duration: {format_duration(actual_duration_seconds)}\n"
+        except (ValueError, TypeError):
+            pass
+    
+    # Status
+    log_string += f"Status: {status or 'N/A'}\n"
+    # Failure Reason
+    if log_data.get('failure_reason'):
+        log_string += f"Failure Reason: {log_data['failure_reason']}\n"
+
+    # End Time
+    end_time_str = log_data.get('end_time')
+    if end_time_str:
+        try:
+            end_time_str = datetime.datetime.fromisoformat(end_time_str).strftime("%Y-%m-%d %H:%M:%S")
+        except (ValueError, TypeError):
+            pass # keep original
+        log_string += f"End Time: {end_time_str}\n"
+
 
     sample_code = log_data.get('sample_code', 'UnknownSample')
     time_str = log_data.get('time', '')
@@ -207,8 +254,8 @@ def download_package(log_id):
         try:
             dt_obj = datetime.datetime.fromisoformat(time_str)
             safe_time = dt_obj.strftime("%Y%m%d_%H%M%S")
-        except Exception:
-            safe_time = time_str.replace(':', '-').replace(' ', '_')
+        except ValueError:
+             safe_time = time_str.replace(':', '-').replace(' ', '_')
 
     download_filename = f"{safe_sample_code}_{safe_time}.zip"
 
@@ -225,64 +272,6 @@ def download_package(log_id):
         mimetype='application/zip'
     )
 
-@api.route('/download/video/<int:log_id>')
-def download_video(log_id):
-    """
-    Serve MP4 with Range support so browsers can stream/seek.
-    """
-    logs = read_logs()
-    log_data = next((l for l in logs if l.get('id') == log_id), None)
-    if not log_data:
-        return jsonify({'status': 'Log not found'}), 404
-
-    video_filename = get_video_filename_from_log(log_data)
-    if not video_filename:
-        return jsonify({'status': 'Video file reference not found in log'}), 404
-
-    video_path = os.path.join(LOGS_DIR, video_filename)
-    if not os.path.exists(video_path):
-        return jsonify({'status': 'Video file is missing from disk'}), 404
-
-    file_size = os.path.getsize(video_path)
-    range_header = request.headers.get('Range', None)
-
-    if not range_header:
-        # no Range header -> full response (ok for direct download)
-        return send_file(video_path, as_attachment=False, download_name=video_filename, mimetype='video/mp4', conditional=True)
-
-    # parse Range header "bytes=start-end"
-    m = re.match(r'bytes=(\d+)-(\d*)', range_header)
-    if not m:
-        return Response(status=416)
-
-    start = int(m.group(1))
-    end = int(m.group(2)) if m.group(2) else file_size - 1
-    if end >= file_size:
-        end = file_size - 1
-    if start > end:
-        return Response(status=416)
-
-    length = end - start + 1
-
-    def generate():
-        with open(video_path, 'rb') as f:
-            f.seek(start)
-            remaining = length
-            chunk_size = 8192
-            while remaining > 0:
-                read_size = min(chunk_size, remaining)
-                data = f.read(read_size)
-                if not data:
-                    break
-                remaining -= len(data)
-                yield data
-
-    rv = Response(generate(), status=206, mimetype='video/mp4')
-    rv.headers.add('Content-Range', f'bytes {start}-{end}/{file_size}')
-    rv.headers.add('Accept-Ranges', 'bytes')
-    rv.headers.add('Content-Length', str(length))
-    return rv
-
 @api.route('/camera/feed')
 def camera_feed():
     return Response(get_camera_instance().video_feed(), mimetype='multipart/x-mixed-replace; boundary=frame')
@@ -290,8 +279,11 @@ def camera_feed():
 @api.route('/camera/release', methods=['POST'])
 def release_camera():
     """Releases the camera for the live feed, without affecting recordings."""
-    get_camera_instance().release()
-    return jsonify({'status': 'Camera reference released for feed'})
+    instance = get_camera_instance()
+    if instance:
+        instance.release()
+        return jsonify({'status': 'Camera feed stopped.'})
+    return jsonify({'status': 'Camera not initialized.'}), 500
 
 @api.route("/stats")
 def stats():
@@ -309,6 +301,7 @@ def stats():
     uptime_seconds = time.time() - start_time
     uptime_str = f"{int(uptime_seconds // 3600)}h {int((uptime_seconds % 3600) // 60)}m {int(uptime_seconds % 60)}s"
     cpu_usage = psutil.cpu_percent(interval=0.1)
+    cpu_temp = get_cpu_temperature()
     mem = psutil.virtual_memory()
     disk = psutil.disk_usage('/')
     current_net_stats = psutil.net_io_counters()
@@ -320,7 +313,8 @@ def stats():
 
     return jsonify(
         hostname=hostname, ip=ip_address, uptime=uptime_str,
-        cpu_usage=cpu_usage, mem_used=mem.used, mem_total=mem.total, memory_usage=mem.percent,
+        cpu_usage=cpu_usage, cpu_temp=cpu_temp,
+        mem_used=mem.used, mem_total=mem.total, memory_usage=mem.percent,
         disk_used=disk.used, disk_total=disk.total, disk_usage=disk.percent,
         net_upload_speed=upload_speed, net_download_speed=download_speed
     )

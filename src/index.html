@@ -230,6 +230,7 @@
         const liveFeedImg = document.getElementById('live-feed-img');
 
         let timer;
+        let statusPoller;
         let currentLogId = null;
         let isFeedRunning = true;
 
@@ -258,12 +259,14 @@
                     timeLeftDisplay.textContent = formatTime(remaining);
                 } else {
                     clearInterval(timer);
-                    checkServerState();
                 }
             };
 
-            updateTimer(); // Initial call
+            updateTimer();
             timer = setInterval(updateTimer, 1000);
+
+            clearInterval(statusPoller);
+            statusPoller = setInterval(checkServerState, 2000);
 
             statusDisplay.textContent = 'Running...';
             recordingIndicator.style.display = 'flex';
@@ -324,6 +327,7 @@
 
         function resetUi() {
             clearInterval(timer);
+            clearInterval(statusPoller);
             const duration = getDurationFromInputs();
             timeLeftDisplay.textContent = formatTime(duration);
             statusDisplay.textContent = 'Idle';
@@ -339,7 +343,7 @@
                 try {
                     const response = await fetch('/api/camera/release', { method: 'POST' });
                     if(response.ok) {
-                        liveFeedImg.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"; // 1x1 transparent gif
+                        liveFeedImg.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
                         toggleFeedBtn.textContent = 'Start Feed';
                         isFeedRunning = false;
                     } else {
@@ -351,7 +355,7 @@
                     alert("An error occurred while trying to stop the feed.");
                 }
             } else {
-                liveFeedImg.src = '/api/camera/feed?_=' + new Date().getTime(); // Bust cache
+                liveFeedImg.src = '/api/camera/feed?_=' + new Date().getTime();
                 toggleFeedBtn.textContent = 'Stop Feed';
                 isFeedRunning = true;
             }
@@ -363,26 +367,39 @@
                 const data = await response.json();
 
                 if (data.running) {
-                    currentLogId = data.log.id;
-                    const startTime = new Date(data.log.time);
-                    const totalDuration = data.log.duration;
-                    const endTime = new Date(startTime.getTime() + totalDuration * 1000);
-                    
-                    sampleCodeInput.value = data.log.sample_code;
-                    const h = Math.floor(totalDuration / 3600);
-                    const m = Math.floor((totalDuration % 3600) / 60);
-                    const s = totalDuration % 60;
-                    hoursInput.value = h;
-                    minutesInput.value = m;
-                    secondsInput.value = s;
-                    
-                    startUiUpdate(endTime);
+                    if (!currentLogId) {
+                        currentLogId = data.log.id;
+                        const startTime = new Date(data.log.time);
+                        const totalDuration = data.log.duration;
+                        const endTime = new Date(startTime.getTime() + totalDuration * 1000);
+                        
+                        sampleCodeInput.value = data.log.sample_code;
+                        const h = Math.floor(totalDuration / 3600);
+                        const m = Math.floor((totalDuration % 3600) / 60);
+                        const s = totalDuration % 60;
+                        hoursInput.value = h;
+                        minutesInput.value = m;
+                        secondsInput.value = s;
+                        
+                        startUiUpdate(endTime);
+                    }
                 } else {
-                    resetUi();
+                    if (currentLogId) {
+                        const logResponse = await fetch('/api/test/logs');
+                        const logs = await logResponse.json();
+                        const finishedLog = logs.find(log => log.id === currentLogId);
+
+                        if (finishedLog && finishedLog.status === 'Fail' && finishedLog.failure_reason === 'Weight Fallen Down!') {
+                            alert('Test failed due to Weight Fell Down!');
+                        }
+                        
+                        resetUi();
+                    }
                 }
             } catch (error) {
                 console.error("Failed to check server state:", error);
                 statusDisplay.textContent = 'Connection error';
+                resetUi();
             }
         }
         
