@@ -105,6 +105,9 @@ sudo nano /etc/systemd/system/flaskcam.service
 To start service
 ```
 sudo systemctl enable flaskcam.service
+
+Created symlink '/etc/systemd/system/multi-user.target.wants/flaskcam.service' → '/etc/systemd/system/flaskcam.service'.
+
 sudo systemctl start flaskcam.service
 ```
 check status
@@ -166,4 +169,5 @@ Removed '/etc/systemd/system/multi-user.target.wants/flaskcam.service'.
 ![indexpage](/screenshots/index.png)
 ![SystemInfo](/screenshots/sys%20info.png)
 ![TestHistory](/screenshots/test%20history.png)
+
 
