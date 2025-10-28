@@ -84,8 +84,86 @@ The application exposes several API endpoints to control its functionality:
 - `GET /api/camera/feed`: Provides the live MJPEG video stream.
 - `POST /api/camera/release`: Releases the front-end's reference to the camera, allowing it to turn off if not otherwise in use.
 - `GET /api/stats`: Provides real-time system performance data.
+## Autostart
+```
+sudo nano /etc/systemd/system/flaskcam.service
+```
+```
+    [Unit]
+    Description=Flask Camera Automation
+    After=network.target
 
+    [Service]
+    User=pi
+    WorkingDirectory=/home/pi/RaspberryPI-Camera-Automation
+    ExecStart=/usr/bin/python3 /home/pi/RaspberryPI-Camera-Automation/app.py
+    Restart=always
+
+    [Install]
+    WantedBy=multi-user.target
+```
+To start service
+```
+sudo systemctl enable flaskcam.service
+sudo systemctl start flaskcam.service
+```
+check status
+```
+sudo systemctl status flaskcam.service
+● flaskcam.service - Flask Camera Automation
+     Loaded: loaded (/etc/systemd/system/flaskcam.service; enabled; preset: enabled)
+     Active: active (running) since Tue 2025-10-28 11:51:50 IST; 25s ago
+ Invocation: 7a13d34c8a5a46d99434c22cd140305e
+   Main PID: 83072 (python3)
+      Tasks: 7 (limit: 3918)
+        CPU: 3.335s
+     CGroup: /system.slice/flaskcam.service
+             └─83072 /usr/bin/python3 /home/pi/RaspberryPI-Camera-Automation/app.py
+
+Oct 28 11:51:52 raspberrypi python3[83072]: Initializing OLEDDisplay...
+Oct 28 11:51:52 raspberrypi python3[83072]: OLED display initialized successfully.
+Oct 28 11:51:52 raspberrypi python3[83072]: Error starting camera simulator: [Errno 2] No such file or directory: '/home/pi/RaspberryPI-Camera-Automation/.ve>
+Oct 28 11:51:52 raspberrypi python3[83072]:  * Serving Flask app 'app'
+Oct 28 11:51:52 raspberrypi python3[83072]:  * Debug mode: on
+Oct 28 11:51:52 raspberrypi python3[83072]: WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server ins>
+Oct 28 11:51:52 raspberrypi python3[83072]:  * Running on all addresses (0.0.0.0)
+Oct 28 11:51:52 raspberrypi python3[83072]:  * Running on http://127.0.0.1:8080
+Oct 28 11:51:52 raspberrypi python3[83072]:  * Running on http://192.168.1.175:8080
+Oct 28 11:51:52 raspberrypi python3[83072]: Press CTRL+C to quit
+```
+Stopping once
+```
+sudo systemctl stop flaskcam.service
+
+sudo systemctl status flaskcam.service
+○ flaskcam.service - Flask Camera Automation
+     Loaded: loaded (/etc/systemd/system/flaskcam.service; enabled; preset: enabled)
+     Active: inactive (dead) since Tue 2025-10-28 11:54:51 IST; 6s ago
+   Duration: 3min 1.274s
+ Invocation: 7a13d34c8a5a46d99434c22cd140305e
+    Process: 83072 ExecStart=/usr/bin/python3 /home/pi/RaspberryPI-Camera-Automation/app.py (code=killed, signal=TERM)
+   Main PID: 83072 (code=killed, signal=TERM)
+        CPU: 1min 1.669s
+
+Oct 28 11:52:38 raspberrypi python3[83072]: [1:28:51.514483108] [83891]  INFO Camera camera_manager.cpp:220 Adding camera '/base/soc/i2c0mux/i2c@1/ov5647@36'>
+Oct 28 11:52:38 raspberrypi python3[83072]: [1:28:51.514535052] [83891]  INFO RPI vc4.cpp:440 Registered camera /base/soc/i2c0mux/i2c@1/ov5647@36 to Unicam d>
+Oct 28 11:52:38 raspberrypi python3[83072]: [1:28:51.514568218] [83891]  INFO RPI pipeline_base.cpp:1107 Using configuration file '/usr/share/libcamera/pipel>
+Oct 28 11:52:38 raspberrypi python3[83072]: [1:28:51.522207872] [83883]  INFO Camera camera.cpp:1215 configuring streams: (0) 1920x1080-XBGR8888/Rec709/Rec70>
+Oct 28 11:52:38 raspberrypi python3[83072]: [1:28:51.522653661] [83891]  INFO RPI vc4.cpp:615 Sensor: /base/soc/i2c0mux/i2c@1/ov5647@36 - Selected sensor for>
+Oct 28 11:52:39 raspberrypi python3[83072]: 192.168.1.119 - - [28/Oct/2025 11:52:39] "GET /api/camera/feed HTTP/1.1" 200 -
+Oct 28 11:54:51 raspberrypi systemd[1]: Stopping flaskcam.service - Flask Camera Automation...
+Oct 28 11:54:51 raspberrypi systemd[1]: flaskcam.service: Deactivated successfully.
+Oct 28 11:54:51 raspberrypi systemd[1]: Stopped flaskcam.service - Flask Camera Automation.
+Oct 28 11:54:51 raspberrypi systemd[1]: flaskcam.service: Consumed 1min 1.669s CPU time.
+
+```
+Stopping autostart
+```
+sudo systemctl disable flaskcam.service
+Removed '/etc/systemd/system/multi-user.target.wants/flaskcam.service'.
+```
 ## Screenshots
 ![indexpage](/screenshots/index.png)
 ![SystemInfo](/screenshots/sys%20info.png)
 ![TestHistory](/screenshots/test%20history.png)
+
