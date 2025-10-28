@@ -2,3 +2,4 @@ flask
 psutil
 Pillow
 opencv-python
+adafruit-circuitpython-ssd1306

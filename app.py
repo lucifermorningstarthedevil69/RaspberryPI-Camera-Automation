@@ -3,6 +3,8 @@ import os
 import subprocess
 from flask import Flask, send_from_directory
 from src.api import api
+from src.oled_display import OLEDDisplay 
+oled_display = OLEDDisplay()
 
 app = Flask(__name__, static_folder='static')
 
@@ -59,5 +61,14 @@ def serve_video(filename):
 
 # --- Main ---
 if __name__ == "__main__":
+    oled_display = OLEDDisplay()
+    if oled_display.is_active:
+        oled_display.display_initializing()
+        
     start_camera_simulator()
+
+
+    if oled_display.is_active:
+        oled_display.start_status_updates()
+        
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8080)), debug=True, use_reloader=False)

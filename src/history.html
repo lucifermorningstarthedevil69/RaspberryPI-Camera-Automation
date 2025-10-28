@@ -14,6 +14,7 @@
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
+            box-sizing: border-box;
         }
         .main-container {
             width: 100%;
@@ -49,10 +50,16 @@
             border-radius: 12px;
             padding: 20px;
         }
+            .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
         .card h2 {
             font-size: 18px;
             margin-top: 0;
-            margin-bottom: 20px;
+            margin-bottom: 0px;
             color: #8e8e93;
         }
         table {
@@ -79,6 +86,8 @@
             color: #8e8e93;
             border-top: 1px solid #3a3a3c;
             margin-top: 20px;
+            width: 100%;
+            box-sizing: border-box;
         }
         .btn {
             padding: 8px 12px;
@@ -94,8 +103,82 @@
             opacity: 0.6;
         }
         .btn-view { background-color: #007aff; color: #fff; }
-        .btn-download { background-color: #333; color: #fff; }
+        .btn-download { background-color: #4cd964; color: #fff; }
         .btn-delete { background-color: #ff3b30; color: #fff; }
+        .btn-download-all { background-color: #007aff; color: #fff; }
+         /* Responsive Styles */
+        @media screen and (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .nav {
+                margin-top: 15px;
+                display: flex;
+                flex-direction: column;
+                width: 100%;
+            }
+            .nav a {
+                margin-left: 0;
+                margin-bottom: 10px;
+                padding: 10px;
+                border-bottom: 1px solid #3a3a3c;
+            }
+            .nav a.active {
+                border-bottom-color: #007aff;
+            }
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .btn-download-all {
+                margin-top: 10px;
+                width: 100%;
+            }
+            table, thead, tbody, th, td, tr {
+                display: block;
+            }
+            thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+            tr {
+                border: 1px solid #3a3a3c;
+                border-radius: 8px;
+                margin-bottom: 15px;
+            }
+            td {
+                border: none;
+                border-bottom: 1px solid #3a3a3c;
+                position: relative;
+                padding-left: 50%;
+                text-align: right;
+                min-height: 24px; /* Ensure space for label */
+            }
+            td:before {
+                position: absolute;
+                left: 15px;
+                right: calc(50% + 15px);
+                width: calc(50% - 30px);
+                white-space: nowrap;
+                text-align: left;
+                font-weight: bold;
+                content: attr(data-label);
+                color: #8e8e93;
+            }
+            td:last-child {
+                border-bottom: 0;
+                padding: 15px;
+                display: flex;
+                flex-direction: column;
+            }
+            .btn {
+                width: 100%;
+                margin-right: 0;
+                box-sizing: border-box;
+            }
+        }
     </style>
 </head>
 <body>
@@ -110,7 +193,9 @@
         </div>
 
         <div class="card">
-            <h2>Test Logs</h2>
+            <div class="card-header">
+                <h2>Test Logs</h2>
+            </div>
             <table>
                 <thead>
                     <tr>
@@ -128,7 +213,7 @@
         </div>
     </div>
     <footer class="footer">
-        Copyright © 2024 Cenduetice. | Contact Us | Privacy Policy
+        Copyright © 2025
     </footer>
 
     <script>
@@ -204,8 +289,10 @@
                     <td class="status-${log.status}">${log.status || 'Unknown'}</td>
                     <td>
                         <button class="btn btn-view" data-filename="${videoFilename}" ${!isVideoAvailable ? 'disabled' : ''}>View</button>
-                        <button class="btn btn-download" data-id="${log.id}" ${!isVideoAvailable ? 'disabled' : ''}>Download</button>
-                        <button class="btn btn-delete" data-id="${log.id}">Delete</button>
+                        <button class="btn btn-download btn-download-log" data-id="${log.id}">Download Log</button>
+                        <button class="btn btn-download btn-download-video" data-id="${log.id}" ${!isVideoAvailable ? 'disabled' : ''}>Download Video</button>
+                        <button class="btn btn-delete btn-delete-log" data-id="${log.id}">Delete Log</button>
+                        <button class="btn btn-delete btn-delete-video" data-id="${log.id}" ${!isVideoAvailable ? 'disabled' : ''}>Delete Video</button>
                     </td>
                 `;
                 logTableBody.appendChild(row);
@@ -219,12 +306,18 @@
             const logId = target.dataset.id;
             const filename = target.dataset.filename;
 
-            if (target.classList.contains('btn-delete')) {
-                if (confirm('Are you sure you want to delete this log and its video?')) {
+            if (target.classList.contains('btn-delete-log')) {
+                if (confirm('Are you sure you want to delete this log entry?')) {
                     await deleteLog(logId);
                 }
-            } else if (target.classList.contains('btn-download')) {
-                if(logId) downloadPackage(logId);
+            } else if (target.classList.contains('btn-delete-video')) {
+                if (confirm('Are you sure you want to delete this video file?')) {
+                    await deleteVideo(logId);
+                }
+            } else if (target.classList.contains('btn-download-log')) {
+                if(logId) downloadLog(logId);
+            } else if (target.classList.contains('btn-download-video')) {
+                if(logId) downloadVideo(logId);
             } else if (target.classList.contains('btn-view')) {
                 if (filename && filename !== 'null') {
                     viewVideo(filename);
@@ -232,9 +325,10 @@
             }
         });
 
+
         async function deleteLog(logId) {
             try {
-                const response = await fetch(`/api/test/logs/${logId}`, { method: 'DELETE' });
+                const response = await fetch(`/api/test/logs/log/${logId}`, { method: 'DELETE' });
                 if (response.ok) {
                     fetchLogs(); // Refresh list
                 } else {
@@ -246,9 +340,32 @@
                 alert("An error occurred while deleting the log.");
             }
         }
+        
+        async function deleteVideo(logId) {
+            try {
+                const response = await fetch(`/api/test/logs/video/${logId}`, { method: 'DELETE' });
+                if (response.ok) {
+                    fetchLogs(); // Refresh list
+                } else {
+                    const err = await response.json();
+                    alert(`Failed to delete video: ${err.status}`);
+                }
+            } catch (error) {
+                console.error("Error deleting video:", error);
+                alert("An error occurred while deleting the video.");
+            }
+        }
 
-        function downloadPackage(logId) {
-            window.location.href = `/api/download/package/${logId}`;
+        function downloadLog(logId) {
+            window.location.href = `/api/test/logs/download/${logId}`;
+        }
+
+        function downloadVideo(logId) {
+            window.location.href = `/api/test/logs/video/${logId}`;
+        }
+        
+        function downloadAllLogs() {
+            window.location.href = '/api/test/logs/download';
         }
 
         function viewVideo(filename) {

@@ -57,7 +57,7 @@ class StreamingOutput(io.BufferedIOBase):
 class Camera:
     """A singleton-managed class to control the PiCamera, providing both a
     live MJPEG stream and H.264 video recording with background MP4 conversion."""
-    def __init__(self, width=1920, height=1080):
+    def __init__(self, width=1280, height=720):
         self.picam2 = Picamera2()
         self.config = self.picam2.create_video_configuration(
             main={"size": (width, height)},

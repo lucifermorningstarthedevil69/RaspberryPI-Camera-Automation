@@ -159,6 +159,84 @@
             border-top: 1px solid #3a3a3c;
             margin-top: 20px;
         }
+        /* Main Content Sections */
+.main-content {
+    text-align: center;
+}
+
+.main-content p {
+    font-size: 1.2rem;
+    color: #8e8e93;
+}
+
+/* Form elements */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #3a3a3c;
+    background-color: #1c1c1e;
+    color: #f2f2f7;
+}
+
+/* Responsive Styles */
+@media screen and (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+
+    .container {
+        padding: 15px;
+    }
+
+    header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    nav {
+        width: 100%;
+        margin-top: 15px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    nav a {
+        margin-left: 0;
+        padding: 10px 0;
+        border-bottom: 1px solid #3a3a3c;
+    }
+
+    .controls {
+        display: flex;
+        flex-direction: column;
+    }
+
+    #sample-code {
+        margin-bottom: 10px;
+    }
+
+    .btn {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .navigation a {
+        display: block;
+        text-align: center;
+        margin-top: 10px;
+    }
+}
+
     </style>
 </head>
 <body>
@@ -177,19 +255,19 @@
                 <h2>Test Controls & Information</h2>
                 <div class="form-group">
                     <label for="sample-code">Input Sample Code:</label>
-                    <input type="text" id="sample-code" value="C-TEST-001">
+                    <input type="text" id="sample-code" value="25EABC000">
                 </div>
                 <div class="form-group">
                     <label>Set Timer:</label>
                     <div class="timer-input-group">
                         <input type="number" id="hours" value="0" min="0"> <span>h</span>
-                        <input type="number" id="minutes" value="1" min="0" max="59"> <span>m</span>
+                        <input type="number" id="minutes" value="15" min="0" max="59"> <span>m</span>
                         <input type="number" id="seconds" value="0" min="0" max="59"> <span>s</span>
                     </div>
                 </div>
                 <div>
                     <label>Time Left:</label>
-                    <div id="time-left" class="timer-display">00:01:00</div>
+                    <div id="time-left" class="timer-display">00:15:00</div>
                 </div>
                 <div class="controls">
                     <button id="start-btn" class="btn btn-start">START</button>

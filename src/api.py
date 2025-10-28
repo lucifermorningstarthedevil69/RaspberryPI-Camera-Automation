@@ -4,14 +4,17 @@ import os
 import datetime
 import psutil
 import socket
+import subprocess
 import time
 from src.camera import get_camera_instance
 from src.ir_sensor import IRSensorMonitor
+from PIL import Image, ImageDraw, ImageFont
+import adafruit_ssd1306
 import threading
 import io
-import zipfile
 import re
-
+from src.oled_display import OLEDDisplay
+oled_display = OLEDDisplay() 
 api = Blueprint('api', __name__)
 
 # --- Timezone ---
@@ -108,10 +111,16 @@ def start_test():
 
     data = request.get_json()
     duration = int(data.get('duration'))
+    sample_code = data['sample_code']
     log_id = int(time.time() * 1000)
-    video_filename = f"{log_id}.mp4"
+    # Generate a filename-safe timestamp and sample code
+    now = datetime.datetime.now(IST)
+    datetime_str = now.strftime("%Y%m%d_%H%M%S")
+    safe_sample_code = re.sub(r'[^a-zA-Z0-9_.-]', '_', sample_code)
+    video_filename = f"{safe_sample_code}_{datetime_str}.mp4"
     video_path = os.path.join(LOGS_DIR, video_filename)
 
+    
     new_log = {
         'id': log_id,
         'time': datetime.datetime.now(IST).isoformat(),
@@ -165,37 +174,43 @@ def get_test_status():
 def get_logs():
     return jsonify(read_logs())
 
-@api.route('/test/logs/<int:log_id>', methods=['DELETE'])
-def delete_log(log_id):
+@api.route('/test/logs/log/<int:log_id>', methods=['DELETE'])
+def delete_log_entry(log_id):
     logs = read_logs()
-    log_to_delete = next((l for l in logs if l.get('id') == log_id), None)
-    if not log_to_delete:
+    log_exists = any(l.get('id') == log_id for l in logs)
+    if not log_exists:
         return jsonify({'status': 'Log not found'}), 404
 
-    video_filename = get_video_filename_from_log(log_to_delete)
+    updated_logs = [l for l in logs if l.get('id') != log_id]
+    write_logs(updated_logs)
+    return jsonify({'status': 'Log entry deleted'})
+
+@api.route('/test/logs/video/<int:log_id>', methods=['DELETE'])
+def delete_video(log_id):
+    logs = read_logs()
+    log_to_update = next((l for l in logs if l.get('id') == log_id), None)
+    if not log_to_update:
+        return jsonify({'status': 'Log not found'}), 404
+
+    video_filename = log_to_update.get('video_filename')
     if video_filename:
         video_path = os.path.join(LOGS_DIR, video_filename)
         if os.path.exists(video_path):
             os.remove(video_path)
-            
-    updated_logs = [l for l in logs if l.get('id') != log_id]
-    write_logs(updated_logs)
-    return jsonify({'status': 'Log deleted'})
 
-@api.route('/download/package/<int:log_id>')
-def download_package(log_id):
+        log_to_update['video_filename'] = None
+        write_logs(logs)
+        return jsonify({'status': 'Video deleted'})
+    else:
+        return jsonify({'status': 'No video found for this log'}), 404
+
+
+@api.route('/test/logs/download/<int:log_id>')
+def download_log_txt(log_id):
     logs = read_logs()
     log_data = next((l for l in logs if l.get('id') == log_id), None)
     if not log_data:
         return jsonify({'status': 'Log not found'}), 404
-
-    video_filename = get_video_filename_from_log(log_data)
-    if not video_filename:
-        return jsonify({'status': 'Video file reference not found in log'}), 404
-
-    video_path = os.path.join(LOGS_DIR, video_filename)
-    if not os.path.exists(video_path):
-        return jsonify({'status': 'Video file is missing from disk'}), 404
 
     log_string = "Test Log Details\n==================\n"
 
@@ -245,7 +260,6 @@ def download_package(log_id):
             pass # keep original
         log_string += f"End Time: {end_time_str}\n"
 
-
     sample_code = log_data.get('sample_code', 'UnknownSample')
     time_str = log_data.get('time', '')
     safe_sample_code = re.sub(r'[^a-zA-Z0-9_.-]', '_', sample_code)
@@ -257,20 +271,32 @@ def download_package(log_id):
         except ValueError:
              safe_time = time_str.replace(':', '-').replace(' ', '_')
 
-    download_filename = f"{safe_sample_code}_{safe_time}.zip"
-
-    memory_file = io.BytesIO()
-    with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
-        zf.write(video_path, video_filename)
-        zf.writestr(f'log_{log_id}.txt', log_string)
-    memory_file.seek(0)
+    download_filename = f"log_{safe_sample_code}_{safe_time}.txt"
 
     return send_file(
-        memory_file,
+        io.BytesIO(log_string.encode('utf-8')),
         as_attachment=True,
         download_name=download_filename,
-        mimetype='application/zip'
+        mimetype='text/plain'
     )
+
+@api.route('/test/logs/video/<int:log_id>', methods=['GET'])
+def download_video(log_id):
+    logs = read_logs()
+    log_to_download = next((l for l in logs if l.get('id') == log_id), None)
+    if not log_to_download:
+        return jsonify({'status': 'Log not found'}), 404
+
+    video_filename = log_to_download.get('video_filename')
+    if not video_filename:
+        return jsonify({'status': 'Video not found for this log'}), 404
+
+    video_path = os.path.join(LOGS_DIR, video_filename)
+    if not os.path.exists(video_path):
+        return jsonify({'status': 'Video file not found'}), 404
+
+    return send_file(video_path, as_attachment=True)
+
 
 @api.route('/camera/feed')
 def camera_feed():
@@ -284,6 +310,42 @@ def release_camera():
         instance.release()
         return jsonify({'status': 'Camera feed stopped.'})
     return jsonify({'status': 'Camera not initialized.'}), 500
+    
+@api.route('/shutdown', methods=['POST'])
+def shutdown():
+    try:
+        if oled_display and oled_display.is_active:
+            oled_display.stop_status_updates()
+            oled_display.clear()
+            # Center the text
+            text = "Shutting down..."
+            font = oled_display.font
+            text_width = font.getbbox(text)[2]
+            x = (oled_display.WIDTH - text_width) // 2
+            oled_display.draw.text((x, 24), text, font=font, fill=255)
+            oled_display.device.image(oled_display.image)
+            oled_display.device.show()
+        
+        # Execute shutdown and capture output
+        result = subprocess.run(
+            ['sudo', 'shutdown', '-h', 'now'],
+            capture_output=True,
+            text=True
+        )
+
+        # If shutdown command requires a password, stderr will contain a message.
+        if result.returncode != 0 and 'password' in result.stderr.lower():
+            error_message = "Permission denied. The web server user needs sudo privileges for shutdown."
+            print(f"Shutdown Error: {result.stderr}")
+            return jsonify({"status": "error", "message": error_message}), 403 # Forbidden
+
+        return jsonify({"status": "success", "message": "Shutdown command issued."})
+
+    except Exception as e:
+        error_message = f"An unexpected error occurred during shutdown: {e}"
+        print(error_message)
+        return jsonify({"status": "error", "message": error_message}), 500
+
 
 @api.route("/stats")
 def stats():
