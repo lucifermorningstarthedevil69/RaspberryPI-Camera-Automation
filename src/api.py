@@ -325,6 +325,8 @@ def shutdown():
             oled_display.draw.text((x, 24), text, font=font, fill=255)
             oled_display.device.image(oled_display.image)
             oled_display.device.show()
+            time.sleep(1)
+            oled_display.clear()
         
         # Execute shutdown and capture output
         result = subprocess.run(
