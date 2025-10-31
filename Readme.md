@@ -102,6 +102,7 @@ sudo nano /etc/systemd/system/flaskcam.service
     [Install]
     WantedBy=multi-user.target
 ```
+![Autostart](/screenshots/autostart_flaskapp_systemd_service.png)
 To start service
 ```
 sudo systemctl enable flaskcam.service
@@ -110,6 +111,8 @@ Created symlink '/etc/systemd/system/multi-user.target.wants/flaskcam.service' â
 
 sudo systemctl start flaskcam.service
 ```
+![Enable](/screenshots/enabling_the_flaskapp_service.png)
+
 check status
 ```
 sudo systemctl status flaskcam.service
@@ -134,6 +137,8 @@ Oct 28 11:51:52 raspberrypi python3[83072]:  * Running on http://127.0.0.1:8080
 Oct 28 11:51:52 raspberrypi python3[83072]:  * Running on http://192.168.1.175:8080
 Oct 28 11:51:52 raspberrypi python3[83072]: Press CTRL+C to quit
 ```
+![Status](/screenshots/status_flaskapp_service.png)
+
 Stopping once
 ```
 sudo systemctl stop flaskcam.service
@@ -166,8 +171,12 @@ sudo systemctl disable flaskcam.service
 Removed '/etc/systemd/system/multi-user.target.wants/flaskcam.service'.
 ```
 ## Screenshots
+Homepage
 ![indexpage](/screenshots/index.png)
-![SystemInfo](/screenshots/sys%20info.png)
+Test History
 ![TestHistory](/screenshots/test%20history.png)
+System Info
+![SystemInfo](/screenshots/sys%20info.png)
+
 
 
