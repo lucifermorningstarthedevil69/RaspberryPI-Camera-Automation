@@ -14,6 +14,12 @@ import threading
 import io
 import re
 from src.oled_display import OLEDDisplay
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.pdfgen import canvas
+
 oled_display = OLEDDisplay() 
 api = Blueprint('api', __name__)
 
@@ -125,6 +131,11 @@ def start_test():
         'id': log_id,
         'time': datetime.datetime.now(IST).isoformat(),
         'sample_code': data.get('sample_code'),
+        'sample_type': data.get('sample_type', ''),
+        'is_code': data.get('is_code', ''),
+        'rating': data.get('rating', ''),
+        'height': data.get('height', ''),
+        'weight': data.get('weight', ''),
         'duration': duration,
         'status': 'Running',
         'video_filename': video_filename
@@ -154,7 +165,11 @@ def start_test():
     timer.start()
     ir_monitor.start_monitoring(callback=handle_inactivity)
 
-    return jsonify({'status': 'Test started', 'log': new_log})
+    return jsonify({
+        'status': 'Test started',
+        'log': new_log,
+        'server_time': datetime.datetime.now(IST).isoformat()
+    })
 
 @api.route('/test/stop', methods=['POST'])
 def stop_test():
@@ -168,7 +183,11 @@ def get_test_status():
         if not active_tests:
             return jsonify({'running': False})
         log_info = next(iter(active_tests.values()))['log']
-        return jsonify({'running': True, 'log': log_info})
+        return jsonify({
+            'running': True,
+            'log': log_info,
+            'server_time': datetime.datetime.now(IST).isoformat()
+        })
 
 @api.route('/test/logs', methods=['GET'])
 def get_logs():
@@ -177,13 +196,24 @@ def get_logs():
 @api.route('/test/logs/log/<int:log_id>', methods=['DELETE'])
 def delete_log_entry(log_id):
     logs = read_logs()
-    log_exists = any(l.get('id') == log_id for l in logs)
-    if not log_exists:
+    log_to_delete = next((l for l in logs if l.get('id') == log_id), None)
+    
+    if not log_to_delete:
         return jsonify({'status': 'Log not found'}), 404
+
+    # Delete associated video file if it exists
+    video_filename = log_to_delete.get('video_filename')
+    if video_filename:
+        video_path = os.path.join(LOGS_DIR, video_filename)
+        if os.path.exists(video_path):
+            try:
+                os.remove(video_path)
+            except Exception as e:
+                print(f"Error deleting video file {video_path}: {e}")
 
     updated_logs = [l for l in logs if l.get('id') != log_id]
     write_logs(updated_logs)
-    return jsonify({'status': 'Log entry deleted'})
+    return jsonify({'status': 'Log entry and associated video deleted'})
 
 @api.route('/test/logs/video/<int:log_id>', methods=['DELETE'])
 def delete_video(log_id):
@@ -206,78 +236,104 @@ def delete_video(log_id):
 
 
 @api.route('/test/logs/download/<int:log_id>')
-def download_log_txt(log_id):
+def download_log_pdf(log_id):
     logs = read_logs()
     log_data = next((l for l in logs if l.get('id') == log_id), None)
     if not log_data:
         return jsonify({'status': 'Log not found'}), 404
 
-    log_string = "Test Log Details\n==================\n"
-
-    # Time
+    # Prepare data
+    sample_code = log_data.get('sample_code', 'N/A')
     time_str = log_data.get('time')
+    
+    date_val = "N/A"
+    time_val = "N/A"
     if time_str:
         try:
-            time_str = datetime.datetime.fromisoformat(time_str).strftime("%Y-%m-%d %H:%M:%S")
-        except (ValueError, TypeError):
-            pass # keep original
-    log_string += f"Time: {time_str or 'N/A'}\n"
-
-    # Sample Code
-    log_string += f"Sample Code: {log_data.get('sample_code', 'N/A')}\n"
-
-    # Duration
-    log_string += "Duration:\n"
-    set_duration = log_data.get('duration')
-    if set_duration is not None:
-        log_string += f"  Set Duration: {format_duration(set_duration)}\n"
-    else:
-        log_string += "  Set Duration: N/A\n"
-
-    # Actual Duration (if applicable)
-    status = log_data.get('status')
-    if status == 'Fail' and log_data.get('time') and log_data.get('end_time'):
+            dt = datetime.datetime.fromisoformat(time_str)
+            date_val = dt.strftime("%Y-%m-%d")
+            time_val = dt.strftime("%H:%M:%S")
+        except:
+            pass
+            
+    # Duration logic
+    set_duration = log_data.get('duration', 0)
+    set_dur_str = format_duration(set_duration)
+    
+    actual_dur_str = "N/A"
+    if log_data.get('status') == 'Fail' and log_data.get('time') and log_data.get('end_time'):
         try:
             start_dt = datetime.datetime.fromisoformat(log_data['time'])
             end_dt = datetime.datetime.fromisoformat(log_data['end_time'])
-            actual_duration_seconds = int((end_dt - start_dt).total_seconds())
-            log_string += f"  Actual Duration: {format_duration(actual_duration_seconds)}\n"
-        except (ValueError, TypeError):
+            actual_seconds = int((end_dt - start_dt).total_seconds())
+            actual_dur_str = format_duration(actual_seconds)
+        except:
             pass
+    elif log_data.get('status') == 'Pass':
+         actual_dur_str = set_dur_str # If passed, it completed
+
+    status = log_data.get('status', 'N/A')
+    test_result = "Failure" if status == 'Fail' else "Pass"
+    final_status = "Unsatisfactory" if status == 'Fail' else "Satisfactory"
+
+    # PDF Generation
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    elements = []
     
-    # Status
-    log_string += f"Status: {status or 'N/A'}\n"
-    # Failure Reason
-    if log_data.get('failure_reason'):
-        log_string += f"Failure Reason: {log_data['failure_reason']}\n"
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'Title',
+        parent=styles['Heading1'],
+        alignment=1, # Center
+        spaceAfter=20,
+        fontSize=16,
+        textColor=colors.black
+    )
+    
+    elements.append(Paragraph("Test Report for Terminal Test Apparatus", title_style))
+    elements.append(Spacer(1, 20))
+    
+    # Table Data
+    data = [
+        ["Sample Code:", sample_code],
+        ["IS Code:", log_data.get('is_code', '3854:1997')],
+        ["Sample Type:", log_data.get('sample_type', '')],
+        ["Rating:", log_data.get('rating', '')],
+        ["Height:", log_data.get('height', '')],
+        ["Weight:", log_data.get('weight', '')],
+        ["Duration", f"Set Duration: {set_dur_str}"],
+        ["", f"Actual Duration: {actual_dur_str}"], # Merge cell for Duration
+        ["Date:", date_val],
+        ["Time:", time_val],
+        ["Test Result:", test_result],
+        ["Status:", final_status]
+    ]
 
-    # End Time
-    end_time_str = log_data.get('end_time')
-    if end_time_str:
-        try:
-            end_time_str = datetime.datetime.fromisoformat(end_time_str).strftime("%Y-%m-%d %H:%M:%S")
-        except (ValueError, TypeError):
-            pass # keep original
-        log_string += f"End Time: {end_time_str}\n"
-
-    sample_code = log_data.get('sample_code', 'UnknownSample')
-    time_str = log_data.get('time', '')
-    safe_sample_code = re.sub(r'[^a-zA-Z0-9_.-]', '_', sample_code)
-    safe_time = ''
-    if time_str:
-        try:
-            dt_obj = datetime.datetime.fromisoformat(time_str)
-            safe_time = dt_obj.strftime("%Y%m%d_%H%M%S")
-        except ValueError:
-             safe_time = time_str.replace(':', '-').replace(' ', '_')
-
-    download_filename = f"log_{safe_sample_code}_{safe_time}.txt"
-
+    t = Table(data, colWidths=[150, 300])
+    t.setStyle(TableStyle([
+        ('BOX', (0, 0), (-1, -1), 1, colors.black),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('SPAN', (0, 6), (0, 7)), # Span 'Duration' vertically
+    ]))
+    
+    elements.append(t)
+    doc.build(elements)
+    
+    buffer.seek(0)
+    
+    clean_sample = re.sub(r'[^a-zA-Z0-9_.-]', '_', sample_code)
+    clean_date = date_val.replace('-', '')
+    filename = f"Report_{clean_sample}_{clean_date}.pdf"
+    
     return send_file(
-        io.BytesIO(log_string.encode('utf-8')),
+        buffer,
         as_attachment=True,
-        download_name=download_filename,
-        mimetype='text/plain'
+        download_name=filename,
+        mimetype='application/pdf'
     )
 
 @api.route('/test/logs/video/<int:log_id>', methods=['GET'])

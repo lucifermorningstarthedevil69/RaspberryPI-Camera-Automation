@@ -1,166 +1,265 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>System Info</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Info</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@600;700&display=swap"
+        rel="stylesheet">
     <style>
+        :root {
+            --primary: #007aff;
+            --success: #34c759;
+            --danger: #ff3b30;
+            --warning: #ff9500;
+            --bg: #000000;
+            --surface: #1c1c1e;
+            --surface-elevated: #2c2c2e;
+            --text: #ffffff;
+            --text-secondary: #8e8e93;
+            --border: #38383a;
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #1a1a1a;
-            color: #ffffff;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
             margin: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
         }
+
         .main-container {
             width: 100%;
             max-width: 1200px;
-            padding: 20px;
+            padding: 24px;
             box-sizing: border-box;
             flex-grow: 1;
         }
+
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid #3a3a3c;
-            padding-bottom: 15px;
-            margin-bottom: 20px;
+            padding-bottom: 20px;
+            margin-bottom: 32px;
+            border-bottom: 1px solid var(--border);
         }
+
         .header h1 {
+            font-family: 'Outfit', sans-serif;
             font-size: 24px;
+            font-weight: 700;
             margin: 0;
+            background: linear-gradient(135deg, #fff 0%, #8e8e93 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
+
+        .nav {
+            display: flex;
+            gap: 24px;
+        }
+
         .nav a {
-            color: #8e8e93;
+            color: var(--text-secondary);
             text-decoration: none;
-            margin-left: 20px;
-            font-size: 16px;
+            font-size: 15px;
+            font-weight: 500;
+            transition: var(--transition);
+            padding: 8px 0;
+            position: relative;
         }
+
+        .nav a:hover {
+            color: var(--text);
+        }
+
         .nav a.active {
-            color: #ffffff;
-            border-bottom: 2px solid #007aff;
-            padding-bottom: 5px;
+            color: var(--text);
         }
+
+        .nav a.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: var(--primary);
+            border-radius: 2px;
+        }
+
         .grid-container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 20px;
+            gap: 24px;
         }
+
         .card {
-            background-color: #2c2c2e;
-            border-radius: 12px;
-            padding: 20px;
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
             display: flex;
             flex-direction: column;
         }
+
         .card h2 {
-            font-size: 18px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
             margin-top: 0;
             margin-bottom: 20px;
-            color: #8e8e93;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
+
         .stat-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 16px;
         }
+
         .stat-row:last-child {
             margin-bottom: 0;
         }
+
         .stat-label {
             font-size: 14px;
-            color: #8e8e93;
-        }
-        .stat-value {
-            font-size: 16px;
-            font-weight: 600;
-            color: #ffffff;
-        }
-        .progress-bar-container {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        .progress-bar-label {
-            font-size: 14px;
-            color: #8e8e93;
-            width: 50px; /* Fixed width for alignment */
-        }
-        .progress-bar-wrapper {
-            flex-grow: 1;
-            background-color: #3a3a3c;
-            border-radius: 5px;
-            height: 10px;
-            overflow: hidden;
-        }
-        .progress-bar-inner {
-            height: 100%;
-            background-color: #007aff;
-            border-radius: 5px;
-        }
-                /* --- Button Styles --- */
-        .btn {
-            display: inline-flex; /* Use flexbox for alignment */
-            align-items: center;   /* Vertically center icon and text */
-            justify-content: center; /* Horizontally center content */
-            gap: 8px;              /* Space between icon and text */
-            padding: 10px 20px;
-            font-size: 1rem;
-            font-weight: 500;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            text-decoration: none;
-            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
-            color: white;
+            color: var(--text-secondary);
         }
 
-        .btn:hover {
-         transform: translateY(-1px);
+        .stat-value {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .progress-section {
+            margin-bottom: 20px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar-wrapper {
+            background-color: var(--surface-elevated);
+            border-radius: 100px;
+            height: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .progress-bar-inner {
+            height: 100%;
+            background-color: var(--primary);
+            border-radius: 100px;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: var(--transition);
         }
 
         .btn:active {
-    transform: translateY(0);
-        }
-        button.danger {
-          background-color: #ff3b30;
+            transform: scale(0.98);
         }
 
-        button.danger:hover {
-            background-color: #ff453a;
-        }
-
-        .danger {
-            background-color: #ff3b30;
+        .btn-danger {
+            background-color: var(--danger);
             color: white;
         }
-        .footer {
-            text-align: center;
-            padding: 20px;
-            font-size: 12px;
-            color: #8e8e93;
-            border-top: 1px solid #3a3a3c;
-            margin-top: 20px;
+
+        .btn-danger:hover {
+            background-color: #ff453a;
+            box-shadow: 0 0 20px rgba(255, 59, 48, 0.3);
         }
 
-        /* Responsive Styles */
+        .danger-zone {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, rgba(255, 59, 48, 0.05) 0%, transparent 100%);
+            border-color: rgba(255, 59, 48, 0.2) !important;
+        }
+
+        .danger-zone p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .footer {
+            width: 100%;
+            text-align: center;
+            padding: 32px 24px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border);
+            margin-top: 48px;
+            box-sizing: border-box;
+        }
+
         @media screen and (max-width: 768px) {
-            .info-container {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 20px;
+            }
+
+            .grid-container {
                 grid-template-columns: 1fr;
             }
+
+            .nav {
+                width: 100%;
+                justify-content: space-between;
+                gap: 12px;
+            }
+
+            .main-container {
+                padding: 16px;
+            }
         }
-        
     </style>
 </head>
+
 <body>
     <div class="main-container">
         <div class="header">
-            <h1>Test Damage to Conductor</h1>
+            <h1>Automated Terminal Test Apparatus</h1>
             <nav class="nav">
                 <a href="/">Home</a>
                 <a href="/history">Test History</a>
@@ -186,84 +285,93 @@
             </div>
 
             <div class="card">
-                <h2>Network</h2>
+                <h2>Network Speed</h2>
                 <div class="stat-row">
-                    <span class="stat-label">Upload</span>
+                    <span class="stat-label">Upload Rate</span>
                     <span id="net-upload" class="stat-value">- Mbps</span>
                 </div>
                 <div class="stat-row">
-                    <span class="stat-label">Download</span>
+                    <span class="stat-label">Download Rate</span>
                     <span id="net-download" class="stat-value">- Mbps</span>
                 </div>
             </div>
 
             <div class="card">
-        <h2>CPU</h2>
-<div class="progress-bar-container">
-    <span id="cpu-usage" class="stat-value">- %</span>
-    <div class="progress-bar-wrapper">
-        <div id="cpu-progress" class="progress-bar-inner"></div>
-    </div>
-</div>
-<div style="height: 15px;"></div>
-<div class="stat-row">
-    <span class="stat-label">Temperature</span>
-    <span id="cpu-temp" class="stat-value">- C</span>
-</div>
-    </div>
-            
+                <h2>Processor (CPU)</h2>
+                <div class="progress-section">
+                    <div class="progress-header">
+                        <span class="stat-label">CPU Usage</span>
+                        <span id="cpu-usage" class="stat-value">- %</span>
+                    </div>
+                    <div class="progress-bar-wrapper">
+                        <div id="cpu-progress" class="progress-bar-inner"></div>
+                    </div>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Core Temperature</span>
+                    <span id="cpu-temp" class="stat-value">- C</span>
+                </div>
+            </div>
+
             <div class="card">
-                <h2>Memory</h2>
-                <div class="progress-bar-container">
-                     <span id="mem-usage" class="stat-value">- %</span>
+                <h2>Memory (RAM)</h2>
+                <div class="progress-section">
+                    <div class="progress-header">
+                        <span class="stat-label">Used / Total</span>
+                        <span id="mem-usage" class="stat-value">- %</span>
+                    </div>
                     <div class="progress-bar-wrapper">
                         <div id="mem-progress" class="progress-bar-inner"></div>
                     </div>
                 </div>
-                <div style="height: 15px;"></div>
                 <div class="stat-row">
-                    <span class="stat-label">Used</span>
+                    <span class="stat-label">Currently Used</span>
                     <span id="mem-used" class="stat-value">-</span>
                 </div>
                 <div class="stat-row">
-                    <span class="stat-label">Total</span>
+                    <span class="stat-label">Total Installed</span>
                     <span id="mem-total" class="stat-value">-</span>
                 </div>
             </div>
 
             <div class="card">
-                <h2>Disk</h2>
-                 <div class="progress-bar-container">
-                    <span id="disk-usage" class="stat-value">- %</span>
+                <h2>Storage (Disk)</h2>
+                <div class="progress-section">
+                    <div class="progress-header">
+                        <span class="stat-label">Disk Capacity</span>
+                        <span id="disk-usage" class="stat-value">- %</span>
+                    </div>
                     <div class="progress-bar-wrapper">
                         <div id="disk-progress" class="progress-bar-inner"></div>
                     </div>
                 </div>
-                <div style="height: 15px;"></div>
                 <div class="stat-row">
-                    <span class="stat-label">Used</span>
+                    <span class="stat-label">Used Space</span>
                     <span id="disk-used" class="stat-value">-</span>
                 </div>
                 <div class="stat-row">
-                    <span class="stat-label">Total</span>
+                    <span class="stat-label">Total Space</span>
                     <span id="disk-total" class="stat-value">-</span>
                 </div>
             </div>
-             <div class="danger-zone">
-            <h2>Danger Zone</h2>
-            <p>Proceed with caution. Shutting down the device will stop all running processes.</p>
-            <button id="shutdown-btn" class="btn danger">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-power" viewBox="0 0 16 16">
-                    <path d="M7.5 1v7h1V1h-1z"/>
-                    <path d="M3 8.812a4.999 4.999 0 0 1 2.578-4.375l-.485-.874A6 6 0 1 0 11 3.616l-.501.865A5 5 0 1 1 3 8.812z"/>
-                </svg>
-                Shutdown
-            </button>
-                </div>
+
+            <div class="card danger-zone">
+                <h2>System Control</h2>
+                <p>Warning: Shutting down the device will stop all active tests and measurements immediately.</p>
+                <button id="shutdown-btn" class="btn btn-danger">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                        viewBox="0 0 16 16" style="margin-right: 8px;">
+                        <path d="M7.5 1v7h1V1h-1z" />
+                        <path
+                            d="M3 8.812a4.999 4.999 0 0 1 2.578-4.375l-.485-.874A6 6 0 1 0 11 3.616l-.501.865A5 5 0 1 1 3 8.812z" />
+                    </svg>
+                    Shutdown System
+                </button>
+            </div>
         </div>
     </div>
     <footer class="footer">
-        Copyright © 2025
+        Automated Terminal Test Apparatus &bull; 2025
     </footer>
     <script>
         const hostnameEl = document.getElementById('hostname');
@@ -330,7 +438,7 @@
             fetchStats();
             setInterval(fetchStats, 1000);
         });
-         document.getElementById('shutdown-btn').addEventListener('click', () => {
+        document.getElementById('shutdown-btn').addEventListener('click', () => {
             if (confirm('Are you sure you want to shut down the Raspberry Pi?')) {
                 fetch('/api/shutdown', { method: 'POST' })
                     .then(response => response.json())
@@ -349,4 +457,5 @@
         });
     </script>
 </body>
+
 </html>

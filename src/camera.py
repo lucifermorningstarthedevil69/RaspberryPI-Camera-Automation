@@ -16,6 +16,7 @@ def _convert_h264_to_mp4(h264_file, mp4_file, delete_h264=True):
         try:
             command = [
                 'ffmpeg',
+                '-r', '30',      # Enforce input framerate for accurate duration
                 '-i', h264_file,
                 '-c:v', 'copy',  # Fast, no re-encoding
                 '-y',            # Overwrite if exists

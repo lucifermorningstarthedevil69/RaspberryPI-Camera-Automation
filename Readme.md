@@ -171,11 +171,19 @@ sudo systemctl disable flaskcam.service
 Removed '/etc/systemd/system/multi-user.target.wants/flaskcam.service'.
 ```
 ## Screenshots
-Homepage
+### Homepage
 ![indexpage](/screenshots/index.png)
-Test History
+
+### Test History
 ![TestHistory](/screenshots/test%20history.png)
-System Info
+
+### Video Playback
+![Videoplay](/screenshots/video%20play.png)
+
+### Test Report
+![TestReport](/screenshots/test%20report.png)
+
+### System Info
 ![SystemInfo](/screenshots/sys%20info.png)
 
 
