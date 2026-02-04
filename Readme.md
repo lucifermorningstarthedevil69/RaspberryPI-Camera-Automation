@@ -39,7 +39,9 @@ This is a web-based application designed for conducting and monitoring conductor
 │   └── system-info.html # System monitoring dashboard
 └── test_logs/          # Default directory for storing videos and logs
 ```
-
+## Guide and Instrucions Url
+[Blogger](https://automatedterminaltest.blogspot.com/2026/01/automated-terminal-damage-to-conductor.html)
+[Edgeone](https://automated-terminal-test.edgeone.app/)
 ## Setup and Running the Project
 
 To run the application in a local development environment, follow these steps:

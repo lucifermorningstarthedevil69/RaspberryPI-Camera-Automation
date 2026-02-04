@@ -1,0 +1,572 @@
+<html lang="en">
+  <head>
+    <style>
+      /* ===== CORE LAYOUT ===== */
+      .test-apparatus-container {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          line-height: 1.6;
+          color: #333;
+          max-width: 1000px;
+          margin: 20px auto;
+          background: #fff;
+          border: 1px solid #e1e4e8;
+          border-radius: 8px;
+          padding: 0 10px;
+      }
+
+      .header-section {
+          background: linear-gradient(135deg, #1a5f7a, #083344);
+          color: #fff;
+          padding: 30px;
+          text-align: center;
+      }
+
+      .header-section h1 {
+          margin: 0;
+          font-size: 24px;
+      }
+
+      .meta-info {
+          background: #f8fafc;
+          padding: 15px 30px;
+          border-bottom: 1px solid #e1e4e8;
+          font-size: 0.95em;
+          color: #555;
+          font-style: italic;
+      }
+
+      .content-body {
+          padding: 30px;
+      }
+
+      /* ===== HEADINGS ===== */
+      h2 {
+          color: #1a5f7a;
+          border-bottom: 2px solid #e1e4e8;
+          padding-bottom: 15px;
+          margin-top: 40px;
+          margin-bottom: 25px;
+      }
+
+      h3 {
+          color: #0f172a;
+          margin-top: 20px;
+          font-size: 1.2em;
+      }
+
+      /* ===== STEPS ===== */
+      .instruction-step {
+          margin-bottom: 30px;
+          padding-bottom: 20px;
+          border-bottom: 1px dashed #cbd5e1;
+      }
+
+      .instruction-step:last-child {
+          border-bottom: none;
+      }
+
+      .step-number {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          background: #1a5f7a;
+          color: #fff;
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          font-weight: bold;
+          margin-right: 8px;
+      }
+
+      /* ===== CODE BLOCK ===== */
+      .code-block {
+          background: #1e293b;
+          color: #38bdf8;
+          padding: 15px;
+          border-radius: 5px;
+          font-family: monospace;
+          margin: 10px 0;
+          word-break: break-word;
+      }
+
+      .code-block a {
+          color: inherit;
+          text-decoration: underline;
+      }
+
+      /* ===== NOTES & TOC ===== */
+      .toc {
+          background: #f8fafc;
+          padding: 20px;
+          border-radius: 8px;
+          margin-bottom: 30px;
+          border: 1px solid #e1e4e8;
+      }
+
+      .toc ul {
+          list-style: none;
+          padding: 0;
+          margin: 10px 0 0 0;
+      }
+
+      .toc li {
+          margin-bottom: 8px;
+      }
+
+      .toc a {
+          color: #0ea5e9;
+          text-decoration: none;
+          font-weight: 600;
+      }
+
+      .toc a:hover {
+          text-decoration: underline;
+      }
+
+      .highlight-box {
+          background: #fff3cd;
+          border-left: 4px solid #ffc107;
+          padding: 15px;
+          margin: 20px 0;
+      }
+
+      /* ===== IMAGE GALLERY ===== */
+      .image-gallery {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+          gap: 15px;
+          margin-top: 15px;
+      }
+
+      .image-gallery a {
+          display: block;
+      }
+
+      .image-gallery img {
+          width: 100%;
+          height: auto;
+          border-radius: 10px;
+          cursor: zoom-in;
+          box-shadow: 0 4px 10px rgba(0, 0, 0, .15);
+          transition: transform .25s ease;
+      }
+
+      .image-gallery img:hover {
+          transform: scale(1.03);
+      }
+
+      /* ===== LIGHTBOX ===== */
+      .lightbox {
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, .9);
+          display: none;
+          align-items: center;
+          justify-content: center;
+          z-index: 999999;
+      }
+
+      .lightbox:target {
+          display: flex;
+      }
+
+      .lightbox img {
+          max-width: 95%;
+          max-height: 95%;
+          border-radius: 10px;
+      }
+
+      .lightbox .close {
+          position: absolute;
+          top: 15px;
+          right: 20px;
+          font-size: 32px;
+          color: #fff;
+          text-decoration: none;
+          font-weight: bold;
+      }
+
+      /* ===== MOBILE ===== */
+      @media (max-width: 480px) {
+          .content-body {
+              padding: 15px;
+          }
+
+          .image-gallery {
+              grid-template-columns: 1fr;
+          }
+      }
+
+      .prev-button {
+          display: inline-block;
+          background: #1a5f7a;
+          color: #fff;
+          padding: 12px 24px;
+          text-decoration: none;
+          font-weight: bold;
+          border-radius: 5px;
+          transition: background 0.3s;
+      }
+
+      .prev-button:hover {
+          background: #083344;
+      }
+      html {
+    scroll-behavior: smooth;
+}
+    </style>
+  </head>
+
+  <body>
+    <div class="test-apparatus-container">
+      <header class="header-section">
+        <h1>Raspberry Pi Internet Setup Guide</h1>
+      </header>
+
+      <div class="content-body">
+        <div class="toc">
+          <strong>Quick Navigation:</strong>
+          <ul>
+            <li><a onclick="scrollToSection('ethernet')">1. Connection via Ethernet Cable</a></li>
+            <li>
+              <a onclick="scrollToSection('gui')">2. Connection via WiFi using Graphical Interface (GUI)</a>
+            </li>
+            <li>
+              <a onclick="scrollToSection('cli')">3. Connection via WiFi using Command Line (Advanced User)</a>
+            </li>
+          </ul>
+        </div>
+
+        <h2 id="ethernet">1. Connecting Using an Ethernet Cable</h2>
+        <p>
+          This method is the easiest and most reliable way to get your Raspberry
+          Pi online, especially for first-time setup.
+        </p>
+
+        <div class="instruction-step">
+          <h3>Step 1: Power Off the Raspberry Pi</h3>
+          <p>
+            Before making any connections, make sure your Raspberry Pi is
+            powered off.
+          </p>
+        </div>
+
+        <div class="instruction-step">
+          <h3>Step 2: Connect the Ethernet Cable</h3>
+          <p>
+            Plug one end of the Ethernet cable into the Ethernet port on your
+            Raspberry Pi. Plug the other end into a <strong>LAN port</strong> on
+            your Wi-Fi router. You should hear or feel a click when the cable is
+            securely connected.
+          </p>
+        </div>
+        <div class="image-gallery">
+          <a href="#img1"
+            ><img
+              alt="Raspberry Pi connected to Router via Ethernet"
+              id="view1"
+              loading="lazy"
+              src=""
+          /></a>
+        </div>
+
+        <div class="instruction-step">
+          <h3>Step 3: Power On the Raspberry Pi</h3>
+          <p>
+            Connect the power supply to your Raspberry Pi. The device will start
+            automatically. Look for blinking LEDs near the Ethernet port—this
+            indicates network activity.
+          </p>
+        </div>
+
+        <div class="instruction-step">
+          <h3>Step 4: Verify Internet Connection</h3>
+          <p>
+            Once the Raspberry Pi has booted, look at the network icon in the
+            top-right corner. A wired connection icon means Ethernet is active.
+          </p>
+        </div>
+
+        <h2 id="gui">2. Connecting via WiFi using Graphical User Interface (GUI)</h2>
+        <p>
+          Raspberry Pi OS provides a GUI that makes it easy to connect to
+          wireless networks without using the terminal.
+        </p>
+        <div class="highlight-box">
+          <strong>Initial Step:</strong> Connect the HDMI cable to a monitor and
+          power on the Adapter.
+        </div>
+
+        <div class="image-gallery">
+          <a href="#img2"
+            ><img
+              alt="Raspberry Pi Connected to Monitor"
+              id="view2"
+              loading="lazy"
+              src=""
+          /></a>
+        </div>
+
+        <div class="instruction-step">
+          <h3>Step 1: Open Network Manager</h3>
+          <p>
+            Access Network Manager by clicking the network icon at the
+            right-hand end of the menu bar. If you see the message
+            <em>“No APs found – scanning…”</em>, wait a few seconds.
+          </p>
+        </div>
+
+        <div class="instruction-step">
+          <h3>Step 2: View Available Wireless Networks</h3>
+          <p>
+            Once scanning is complete, a list will appear. A
+            <strong>padlock icon</strong> indicates a secured network, and
+            signal bars show strength. Click on your network.
+          </p>
+        </div>
+        <div class="image-gallery">
+          <a href="#img3"
+            ><img
+              alt="Raspberry Pi Network Manager"
+              id="view3"
+              loading="lazy"
+              src=""
+          /></a>
+        </div>
+
+        <div class="instruction-step">
+          <h3>Step 3: Enter the Network Password</h3>
+          <p>
+            Carefully type the password in the dialog box and click
+            <strong>OK</strong> to continue.
+          </p>
+        </div>
+        <div class="image-gallery">
+          <a href="#img4"
+            ><img
+              alt="Wi-Fi Password Dialog Box"
+              id="view4"
+              loading="lazy"
+              src=""
+          /></a>
+        </div>
+
+        <div class="instruction-step">
+          <h3>Step 4: Confirm Connection</h3>
+          <p>
+            Wait a few seconds. The network icon will flash briefly and then
+            stay solid to show signal strength. You are now connected!
+          </p>
+        </div>
+
+        <h2 id="cli">3. Connecting via WiFi using Command Line (Advanced)</h2>
+        <p>Useful for headless setups (no monitor) or remote access via SSH.</p>
+
+        <div class="instruction-step">
+          <h3>Step 1: Open the Terminal</h3>
+          <p>
+            If you are using the desktop, click the Terminal icon. If you are
+            connected remotely, open your SSH session.
+          </p>
+        </div>
+        <div class="image-gallery">
+          <a href="#img5"
+            ><img alt="SSH into Raspberry Pi" id="view5" loading="lazy" src=""
+          /></a>
+        </div>
+
+        <div class="instruction-step">
+          <h3>Step 2: Launch the Configuration Tool</h3>
+          <p>Run the following command:</p>
+          <div class="code-block">sudo raspi-config</div>
+        </div>
+
+        <div class="image-gallery">
+          <a href="#img6"
+            ><img
+              alt="Raspi-Config Blue Menu Screen"
+              id="view6"
+              loading="lazy"
+              src=""
+          /></a>
+        </div>
+
+        <div class="instruction-step">
+          <h3>Step 3: Navigate to Wireless LAN Settings</h3>
+          <p>
+            Using the keyboard: Select <strong>System Options</strong> and press
+            Enter. Then select <strong>Wireless LAN</strong> and press Enter.
+          </p>
+        </div>
+        <div class="image-gallery">
+          <a href="#img7"
+            ><img
+              alt="Raspi-Config Network Menu"
+              id="view7"
+              loading="lazy"
+              src=""
+          /></a>
+        </div>
+
+        <div class="instruction-step">
+          <h3>Step 4: Enter SSID and Password</h3>
+          <p>
+            After you had selected Wi-fi, raspi-config will prompt for the SSID
+            of the wireless network that you wish to connect to. Therefore,
+            enter the SSID of the wireless network to connect to:
+          </p>
+          <div class="image-gallery">
+            <a href="#img8"
+              ><img
+                alt="Wi-Fi SSID Dialog Box"
+                id="view8"
+                loading="lazy"
+                src=""
+            /></a>
+          </div>
+          <p>
+            When raspi-config gets the SSID of the wireless network, it will
+            prompt for a password. In case the wireless network does not require
+            a passphrase to connect to, leave the input empty. Otherwise, enter
+            the passphrase for the wireless network that you wish to connect to:
+          </p>
+          <div class="highlight-box">
+            Note: The password will not be displayed as you type for security.
+          </div>
+        </div>
+        <div class="image-gallery">
+          <a href="#img9"
+            ><img
+              alt="Wi-Fi Password Dialog Box"
+              id="view9"
+              loading="lazy"
+              src=""
+          /></a>
+        </div>
+
+        <div class="instruction-step">
+          <h3>Step 5: Select Finish</h3>
+          <p>
+            When you had entered the passphrase, raspi-config returns to the
+            first menu. At this point in time, select Finish to complete the
+            configuration:
+          </p>
+        </div>
+
+        <div class="instruction-step">
+          <h3>Step 7: Reboot</h3>
+          <div class="code-block">sudo reboot</div>
+          <p>
+            raspi-config will close. The Raspberry Pi will reboot and will
+            attempt to connect automatically via ssh.
+          </p>
+        </div>
+        <div class="image-gallery">
+          <a href="#img10"
+            ><img alt="Reboot" id="view10" loading="lazy" src=""
+          /></a>
+        </div>
+
+        <div style="margin-top: 40px; text-align: center;">
+          <a
+            class="prev-button"
+            href="https://automatedterminaltest.blogspot.com/2026/01/automated-terminal-damage-to-conductor.html"
+            onclick="location.href=this.href+'?reload='+Date.now(); return false;"
+          >
+            Automated Terminal Test Apparatus</a
+          >
+        </div>
+      </div>
+    </div>
+
+    <!-- Lightboxes -->
+    <div class="lightbox" id="img1">
+      <a class="close" href="#">×</a><img id="full1" src="" />
+    </div>
+    <div class="lightbox" id="img2">
+      <a class="close" href="#">×</a><img id="full2" src="" />
+    </div>
+    <div class="lightbox" id="img3">
+      <a class="close" href="#">×</a><img id="full3" src="" />
+    </div>
+    <div class="lightbox" id="img4">
+      <a class="close" href="#">×</a><img id="full4" src="" />
+    </div>
+    <div class="lightbox" id="img5">
+      <a class="close" href="#">×</a><img id="full5" src="" />
+    </div>
+    <div class="lightbox" id="img6">
+      <a class="close" href="#">×</a><img id="full6" src="" />
+    </div>
+    <div class="lightbox" id="img7">
+      <a class="close" href="#">×</a><img id="full7" src="" />
+    </div>
+    <div class="lightbox" id="img8">
+      <a class="close" href="#">×</a><img id="full8" src="" />
+    </div>
+    <div class="lightbox" id="img9">
+      <a class="close" href="#">×</a><img id="full9" src="" />
+    </div>
+    <div class="lightbox" id="img10">
+      <a class="close" href="#">×</a><img id="full10" src="" />
+    </div>
+
+    <script>
+      function scrollToSection(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    const yOffset = -80; // adjust for Blogger header
+    const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
+
+    window.scrollTo({
+      top: y,
+      behavior: 'smooth'
+    });
+  }
+      (function () {
+          const imgLinks = {
+              eth: "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgTzebHg-KKhLo5SX-sni69LYQ99rLjuriPhXzwYLfQVQ4t-RMqYI-qYWJiSHnWx0BztVsPNXqYtqg4gDo5tb3HNpUhwc1-_yBow8snw-HcptRrgD4a7WcOK3c2ZTThWwTcq3q2MRrPGDlI5P0MZ_JqJQ4DYYtYHnGssfcqTRIFBOeOhvOMy5GqqF-x2Y7r/s1400/ethernet.jpg",
+              hdmi: "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjcAyWx0d1UIszGgMng3-jdQa3fhYYpZnOErGLo0foe6SFweyk2CR7ykccSNZ1ns3FIEWb7UTuOEr0V3LpHonhkjI0QJRiFL2JclnE8v3wWVUk_DOL4jGDlF1RKhfGi6meGR9fhSMDMgAfG4LpzPOY1lHmzRmLyz1bzdQ_w1fm_RKUVWboUNvlPmPCWjB1r/s1280/hdmi.jpg",
+              wifi: "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhRd9mZLJAtNyRnhWTojXRHDbBSupIJhX7QIy6Cl_S70nxzb3v6Dwe-yu8IerHUzfHTm8Loj1S2zzmS_Oz9BeZMWFfmcuEi4K5NQhOT7RJAzg69Gh1FiKV6JLodZuBKvJ7sMC7MAUf5X4-tcfyc13zxhJn6Ob5R85EZsSxocYY-Q1i8DnjMr7QTg0VxqJSR/s1920/wifi2.jpg",
+              password: "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEipEbqgmP51si6nbZoTWB5q5p9h3l-q4FxJyEx68ajaSNE-qU9Mu78TrNh9427OrddQAAlKMWq-UDsAtEhKrkNVc66Yq1ItnOFhkH1Wy45payZLagBcGvYfnVybd5cZWnHwZ7iPSq0XOxEtXQ0Ykq1zEezoKTPD74EreI3SjTHSUh0A7vTPPWvQfVsm0Iy8/s1920/key.jpg",
+              ssh: "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhjWXYChbz0-Xlx7QqD4jAwHY5AiQCbHuUWWxmwa-mee7gTpIZodY1l5mWHOCb54WEwutmSjUW8TwE0TXrtiLv_ziUpnih62qeBmY2F3QizBq3RT6XJ14XBrS_F0VQ9Q8WLa_BJVrhMUW0n_PgnZqckHC2i7pQj7Q30zdEu4Wa53rZlPKXSbLDQW0o3QxNJ/s1360/raspberry-pi-ssh-login.png",
+              config: "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgKJpWj0_BZ_euVoTCYanTW5jDKwqh1uhuqeZdGg11OkQEHCNm8pI6ajx6JWl46_xroW_ZC8tkzCZvae-Twxi4BkKP8ACqG538sE09Vxym9DVlGizEgEw09YamQwQWwllm8e3B7OD-vPyIbq1ESR2NpukPaPk4pCL-TwJGs7RO3cBXQVhu_GEcMLnUBIlk1/s1099/menu.png",
+              network: "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgXc6FmESf8sZ_XpJDlDuVEGrziPdgyAl1RP2lR3cFlvE82NFW3rRNPemPOW2f8V-OMvW3NejATF987PFwAe6hml9at1x8dhJaT2gZvoJOv0cNGPyp_0IcsVm3mNTnMWFhuXMw-HtDpiZQzFaA9cE5CMCWGkTbACR3tyNKUk2q9nct8SZdVYfzmNYUGeGCR/s1099/wifi.png",
+              ssid: "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj_XMGPwxYbNlvmSm-2_6WdG5J0Z_bqFW2ljb4aCImkdzHWB-ISzRf-hQEQZ_wbIDJiwhuw1CoeS1Wj_KVmFoIBtbdAwtG97kyPFDIBmwzXjHfe1FYuYhY8MDXUsL33hA6Aq7BRMnWZeH_cuTxG9HBrxgqzxB-cD08PryPA2kwin1wIvZgHtENQ193H7GqX/s1104/ssid.png",
+              pass: "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg2CF5E6Gbh3zZP455KZKVgfkbXWYIIBAfxFGo94gzOal09lleRthY8pExxz46grFlQ0nIh9WZBYsPqC_sQHhrZXw_Wfb4E57TwgmLAgfy0nZ1yX3DgHclOYiuWeWd-iRyteTkK9s9IeAG-D9OpJsuynAoeU_s5jcK65vD5TFFI0Gw0JwqXpcQ3JIFzVp_w/s1103/password.png",
+              reboot: "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjn53F1mku9EF107rFGDSRxA3f82UE-kaQqaOWWBSmB2uuPmMl1en4L6BDyMU46jbqgz2citBMAWMOYJ7RG75KyiHNpamgmOwdt12uEGdmmc2GmByqweZz1F7NOKEkVY5PmSxPJgx5P6wOZynBeQHkKfjh61SSR0vdLUasoNIBLN24qExwHZGAn5g83Jnh1/w640-h404/Raspbian-Stretch-20181113-raspi-config-Would-you-like-to-reboot-now.jpg"
+          };
+
+          const mapping = [
+              { id: 1, url: imgLinks.eth },
+              { id: 2, url: imgLinks.hdmi },
+              { id: 3, url: imgLinks.wifi },
+              { id: 4, url: imgLinks.password },
+              { id: 5, url: imgLinks.ssh },
+              { id: 6, url: imgLinks.config },
+              { id: 7, url: imgLinks.network },
+              { id: 8, url: imgLinks.ssid },
+              { id: 9, url: imgLinks.pass },
+              { id: 10, url: imgLinks.reboot }
+          ];
+
+          // This function runs only after the page is ready
+          function initImages() {
+              mapping.forEach(item => {
+                  const thumb = document.getElementById('view' + item.id);
+                  const full = document.getElementById('full' + item.id);
+                  if (thumb && item.url) thumb.src = item.url;
+                  if (full && item.url) full.src = item.url;
+              });
+          }
+
+          if (document.readyState === 'loading') {
+              document.addEventListener('DOMContentLoaded', initImages);
+          } else {
+              initImages();
+          }
+      })();
+    </script>
+  </body>
+</html>
