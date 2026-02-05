@@ -179,6 +179,10 @@ Removed '/etc/systemd/system/multi-user.target.wants/flaskcam.service'.
 ### Test History
 ![TestHistory](/screenshots/test%20history.png)
 
+### Alert Messages 
+![TestFail](/screenshots/alert%20test%20fail.png)
+![Testinprogess](/screenshots/alert%20test%20already%20in%20progress.png)
+![CameraFeed](/screenshots/alert%20start%20camera%20feed.png)
 ### Video Playback
 ![Videoplay](/screenshots/video%20play.png)
 
