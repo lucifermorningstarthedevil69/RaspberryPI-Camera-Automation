@@ -1,55 +1,455 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <title>Video Player</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Video Player</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@600;700&display=swap"
+        rel="stylesheet">
     <style>
+        :root {
+            --primary: #007aff;
+            --bg: #000000;
+            --surface: rgba(28, 28, 30, 0.8);
+            --text: #ffffff;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
         body {
             margin: 0;
-            background-color: #000;
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
+            overflow: hidden;
         }
+
+        .player-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #000;
+        }
+
         video {
             width: 100%;
-            max-width: 1200px;
-            height: auto;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        /* Custom Controls */
+        .controls-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+            padding: 24px;
+            opacity: 0;
+            transition: var(--transition);
+            z-index: 10;
+        }
+
+        .player-container:hover .controls-overlay,
+        .player-container.touch-active .controls-overlay {
+            opacity: 1;
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 3px;
+            width: 0%;
+            position: relative;
+            transition: width 0.1s linear;
+        }
+
+        .progress-dot {
+            position: absolute;
+            right: -6px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 12px;
+            height: 12px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .progress-container:hover .progress-dot {
+            opacity: 1;
+        }
+
+        .main-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .left-controls,
+        .right-controls {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .control-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .control-btn:hover {
+            transform: scale(1.1);
+            color: var(--primary);
+        }
+
+        .control-btn svg {
+            width: 22px;
+            height: 22px;
+            fill: currentColor;
+        }
+
+        .time-display {
+            font-size: 13px;
+            font-weight: 500;
+            font-family: 'Outfit', sans-serif;
+            min-width: 80px;
+            color: var(--text-secondary);
+        }
+
+        .volume-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .volume-slider {
+            width: 70px;
+            height: 4px;
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background: white;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid var(--primary);
+        }
+
+        /* Responsive Volume Coloring */
+        .volume-slider {
+            background: linear-gradient(to right, var(--primary) 0%, var(--primary) 100%, rgba(255, 255, 255, 0.2) 100%);
+        }
+
+        .speed-selector {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .speed-selector:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: var(--primary);
+        }
+
+        .speed-selector option {
+            background: #1c1c1e;
+            color: white;
+        }
+
+        /* Center Play/Pause Large */
+        .center-btn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(1.2);
+            background: rgba(0, 122, 255, 0.8);
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            color: white;
+            opacity: 0;
+            pointer-events: none;
+            transition: var(--transition);
+        }
+
+        .player-container:hover .center-btn.visible {
+            opacity: 1;
+        }
+
+        .center-btn svg {
+            width: 40px;
+            height: 40px;
+            fill: currentColor;
         }
     </style>
 </head>
+
 <body>
-    <video id="video-player" controls autoplay playsinline>
-        <!-- Source will be set dynamically by JavaScript -->
-        Your browser does not support the video tag.
-    </video>
+    <div class="player-container" id="player-container">
+        <video id="video-player" playsinline>
+            Your browser does not support the video tag.
+        </video>
+
+        <button class="center-btn" id="center-play-btn">
+            <svg viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z" />
+            </svg>
+        </button>
+
+        <div class="controls-overlay">
+            <div class="progress-container" id="progress-container">
+                <div class="progress-bar" id="progress-bar">
+                    <div class="progress-dot"></div>
+                </div>
+            </div>
+
+            <div class="main-controls">
+                <div class="left-controls">
+                    <button class="control-btn" id="play-pause-btn">
+                        <svg viewBox="0 0 24 24" id="play-icon">
+                            <path d="M8 5v14l11-7z" />
+                        </svg>
+                        <svg viewBox="0 0 24 24" id="pause-icon" style="display:none;">
+                            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                        </svg>
+                    </button>
+
+                    <div class="volume-container">
+                        <button class="control-btn" id="mute-btn">
+                            <svg viewBox="0 0 24 24" id="volume-icon">
+                                <path
+                                    d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" />
+                            </svg>
+                        </button>
+                        <input type="range" class="volume-slider" id="volume-slider" min="0" max="1" step="0.1"
+                            value="1">
+                    </div>
+
+                    <div class="time-display">
+                        <span id="current-time">0:00</span> / <span id="duration">0:00</span>
+                    </div>
+                </div>
+
+                <div class="right-controls">
+                    <select class="speed-selector" id="speed-selector">
+                        <option value="0.5">0.5x</option>
+                        <option value="0.75">0.75x</option>
+                        <option value="1" selected>1.0x</option>
+                        <option value="1.25">1.25x</option>
+                        <option value="1.5">1.50x</option>
+                        <option value="2">2.0x</option>
+                    </select>
+
+                    <button class="control-btn" id="download-btn" title="Download Video">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
+                        </svg>
+                    </button>
+
+                    <button class="control-btn" id="fullscreen-btn">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const videoPlayer = document.getElementById('video-player');
+            const video = document.getElementById('video-player');
+            const container = document.getElementById('player-container');
+            const playPauseBtn = document.getElementById('play-pause-btn');
+            const centerPlayBtn = document.getElementById('center-play-btn');
+            const playIcon = document.getElementById('play-icon');
+            const pauseIcon = document.getElementById('pause-icon');
+            const progressContainer = document.getElementById('progress-container');
+            const progressBar = document.getElementById('progress-bar');
+            const currentTimeEl = document.getElementById('current-time');
+            const durationEl = document.getElementById('duration');
+            const muteBtn = document.getElementById('mute-btn');
+            const volumeSlider = document.getElementById('volume-slider');
+            const fullscreenBtn = document.getElementById('fullscreen-btn');
+            const speedSelector = document.getElementById('speed-selector');
+            const downloadBtn = document.getElementById('download-btn');
+
+            // Load video source from URL
             const pathParts = window.location.pathname.split('/');
             const filename = pathParts[pathParts.length - 1];
 
             if (filename) {
-                const videoSource = document.createElement('source');
-                // Use the existing /videos/ route to serve the video file
-                videoSource.setAttribute('src', `/videos/${filename}`);
-                
-                // Determine type from file extension
+                const source = document.createElement('source');
+                source.src = `/videos/${filename}`;
                 const extension = filename.split('.').pop();
-                if (extension === 'mp4') {
-                    videoSource.setAttribute('type', 'video/mp4');
-                } else if (extension === 'webm') {
-                    videoSource.setAttribute('type', 'video/webm');
-                } // Add other video types if needed
+                source.type = extension === 'webm' ? 'video/webm' : 'video/mp4';
+                video.appendChild(source);
+                video.load();
 
-                videoPlayer.appendChild(videoSource);
-                videoPlayer.load();
-            } else {
-                console.error('No video filename found in URL.');
+                // Set up download button
+                downloadBtn.onclick = () => {
+                    const a = document.createElement('a');
+                    a.href = `/videos/${filename}`;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                };
             }
+
+            // Play / Pause Logic
+            function togglePlay() {
+                if (video.paused) {
+                    video.play();
+                    playIcon.style.display = 'none';
+                    pauseIcon.style.display = 'block';
+                    centerPlayBtn.classList.remove('visible');
+                } else {
+                    video.pause();
+                    playIcon.style.display = 'block';
+                    pauseIcon.style.display = 'none';
+                    centerPlayBtn.classList.add('visible');
+                }
+            }
+
+            playPauseBtn.onclick = togglePlay;
+            centerPlayBtn.onclick = togglePlay;
+            video.onclick = togglePlay;
+
+            // Spacebar for play/pause
+            document.addEventListener('keydown', (e) => {
+                if (e.code === 'Space') {
+                    e.preventDefault();
+                    togglePlay();
+                }
+            });
+
+            // Update progress and time
+            video.ontimeupdate = () => {
+                if (video.duration) {
+                    const percent = (video.currentTime / video.duration) * 100;
+                    progressBar.style.width = `${percent}%`;
+                    currentTimeEl.textContent = formatTime(video.currentTime);
+                }
+            };
+
+            video.onloadedmetadata = () => {
+                durationEl.textContent = formatTime(video.duration);
+            };
+
+            function formatTime(seconds) {
+                const min = Math.floor(seconds / 60);
+                const sec = Math.floor(seconds % 60);
+                return `${min}:${sec.toString().padStart(2, '0')}`;
+            }
+
+            // Seeking logic
+            progressContainer.onclick = (e) => {
+                const rect = progressContainer.getBoundingClientRect();
+                const pos = (e.clientX - rect.left) / rect.width;
+                video.currentTime = pos * video.duration;
+            };
+
+            // Volume control
+            function updateVolumeStyle() {
+                const val = volumeSlider.value * 100;
+                volumeSlider.style.background = `linear-gradient(to right, var(--primary) 0%, var(--primary) ${val}%, rgba(255, 255, 255, 0.2) ${val}%)`;
+            }
+
+            volumeSlider.oninput = (e) => {
+                video.volume = e.target.value;
+                video.muted = video.volume === 0;
+                updateVolumeStyle();
+            };
+
+            muteBtn.onclick = () => {
+                video.muted = !video.muted;
+                volumeSlider.value = video.muted ? 0 : (video.volume || 1);
+                updateVolumeStyle();
+            };
+
+            updateVolumeStyle(); // Initial call
+
+            // Playback Speed
+            speedSelector.onchange = (e) => {
+                video.playbackRate = parseFloat(e.target.value);
+            };
+
+            // Fullscreen
+            fullscreenBtn.onclick = () => {
+                if (!document.fullscreenElement) {
+                    container.requestFullscreen();
+                } else {
+                    document.exitFullscreen();
+                }
+            };
+
+            // Auto-hide controls
+            let hideTimeout;
+            container.onmousemove = () => {
+                container.classList.add('touch-active');
+                clearTimeout(hideTimeout);
+                hideTimeout = setTimeout(() => {
+                    if (!video.paused) container.classList.remove('touch-active');
+                }, 3000);
+            };
+
+            // Start playing
+            video.play().catch(e => {
+                centerPlayBtn.classList.add('visible');
+            });
         });
     </script>
 </body>
+
 </html>
