@@ -253,6 +253,128 @@
                 padding: 16px;
             }
         }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            width: 100%;
+            max-width: 440px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            transform: scale(0.9);
+            transition: var(--transition);
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .modal-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .modal-icon.error {
+            background: rgba(255, 59, 48, 0.2);
+            color: var(--danger);
+        }
+
+        .modal-icon.warning {
+            background: rgba(255, 149, 0, 0.2);
+            color: var(--warning);
+        }
+
+        .modal-icon.info {
+            background: rgba(0, 122, 255, 0.2);
+            color: var(--primary);
+        }
+
+        .modal-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text);
+            margin: 0;
+        }
+
+        .modal-body {
+            color: var(--text-secondary);
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .modal-btn {
+            padding: 12px 24px;
+            border-radius: var(--radius-md);
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .modal-btn-primary {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .modal-btn-secondary {
+            background: var(--surface-elevated);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .modal-btn-danger {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .modal-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
     </style>
 </head>
 
@@ -373,6 +495,23 @@
     <footer class="footer">
         Automated Terminal Test Apparatus &bull; 2025
     </footer>
+    <!-- Custom Modal -->
+    <div id="custom-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div id="modal-icon" class="modal-icon">!</div>
+                <h3 id="modal-title" class="modal-title">Alert</h3>
+            </div>
+            <div id="modal-body" class="modal-body">
+                Message content goes here.
+            </div>
+            <div class="modal-footer" id="modal-footer">
+                <button id="modal-cancel" class="modal-btn modal-btn-secondary" style="display: none;">Cancel</button>
+                <button id="modal-confirm" class="modal-btn modal-btn-primary">Dismiss</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const hostnameEl = document.getElementById('hostname');
         const ipAddressEl = document.getElementById('ip-address');
@@ -390,6 +529,70 @@
         const diskTotalEl = document.getElementById('disk-total');
         const netUploadEl = document.getElementById('net-upload');
         const netDownloadEl = document.getElementById('net-download');
+
+        // Modal Elements
+        const modal = document.getElementById('custom-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalBody = document.getElementById('modal-body');
+        const modalIcon = document.getElementById('modal-icon');
+        const modalConfirm = document.getElementById('modal-confirm');
+        const modalCancel = document.getElementById('modal-cancel');
+
+        let modalResolve = null;
+
+        function showModal(title, message, type = 'info', confirmText = 'Dismiss') {
+            return new Promise((resolve) => {
+                modalTitle.textContent = title;
+                modalBody.textContent = message;
+                modalConfirm.textContent = confirmText;
+                modalConfirm.className = `modal-btn modal-btn-primary`;
+                modalCancel.style.display = 'none';
+
+                modalIcon.className = `modal-icon ${type}`;
+                if (type === 'error') modalIcon.textContent = '✕';
+                else if (type === 'warning') modalIcon.textContent = '⚠';
+                else modalIcon.textContent = 'i';
+
+                modalResolve = resolve;
+                modal.classList.add('active');
+            });
+        }
+
+        function showConfirm(title, message, type = 'warning', confirmText = 'Confirm', cancelText = 'Cancel') {
+            return new Promise((resolve) => {
+                modalTitle.textContent = title;
+                modalBody.textContent = message;
+                modalConfirm.textContent = confirmText;
+                modalConfirm.className = `modal-btn ${type === 'warning' || type === 'error' ? 'modal-btn-danger' : 'modal-btn-primary'}`;
+                modalCancel.textContent = cancelText;
+                modalCancel.style.display = 'block';
+
+                modalIcon.className = `modal-icon ${type}`;
+                if (type === 'error') modalIcon.textContent = '✕';
+                else if (type === 'warning') modalIcon.textContent = '⚠';
+                else modalIcon.textContent = 'i';
+
+                modalResolve = resolve;
+                modal.classList.add('active');
+            });
+        }
+
+        modalConfirm.onclick = () => {
+            modal.classList.remove('active');
+            if (modalResolve) modalResolve(true);
+        };
+
+        modalCancel.onclick = () => {
+            modal.classList.remove('active');
+            if (modalResolve) modalResolve(false);
+        };
+
+        modal.onclick = (e) => {
+            if (e.target === modal) {
+                modal.classList.remove('active');
+                if (modalResolve) modalResolve(false);
+            }
+        };
 
         function formatBytes(bytes) {
             if (bytes === 0) return '0 B';
@@ -438,21 +641,28 @@
             fetchStats();
             setInterval(fetchStats, 1000);
         });
-        document.getElementById('shutdown-btn').addEventListener('click', () => {
-            if (confirm('Are you sure you want to shut down the Raspberry Pi?')) {
-                fetch('/api/shutdown', { method: 'POST' })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.status === 'success') {
-                            alert('The Raspberry Pi is shutting down.');
-                        } else {
-                            alert(`Error: ${data.message}`);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error during shutdown:', error);
-                        alert('An error occurred while trying to shut down.');
-                    });
+        document.getElementById('shutdown-btn').addEventListener('click', async () => {
+            const confirmed = await showConfirm(
+                'Shut Down System?',
+                'Are you sure you want to shut down the Raspberry Pi? This will stop all active tests and measurements immediately.',
+                'warning',
+                'Shut Down'
+            );
+
+            if (confirmed) {
+                try {
+                    const response = await fetch('/api/shutdown', { method: 'POST' });
+                    const data = await response.json();
+
+                    if (data.status === 'success') {
+                        await showModal('System Shutting Down', 'The Raspberry Pi is now shutting down. You can close this tab.', 'info', 'OK');
+                    } else {
+                        await showModal('Shutdown Error', `Error: ${data.message}`, 'error');
+                    }
+                } catch (error) {
+                    console.error('Error during shutdown:', error);
+                    await showModal('Shutdown Error', 'An unexpected error occurred while trying to shut down.', 'error');
+                }
             }
         });
     </script>
