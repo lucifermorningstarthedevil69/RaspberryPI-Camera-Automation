@@ -2,900 +2,394 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test Damage to Conductor</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@600;700&display=swap"
-        rel="stylesheet">
-    <style>
-        :root {
-            --primary: #007aff;
-            --success: #34c759;
-            --danger: #ff3b30;
-            --warning: #ff9500;
-            --bg: #000000;
-            --surface: #1c1c1e;
-            --surface-elevated: #2c2c2e;
-            --text: #ffffff;
-            --text-secondary: #8e8e93;
-            --border: #38383a;
-            --radius-lg: 16px;
-            --radius-md: 12px;
-            --radius-sm: 8px;
-            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        .main-container {
-            width: 100%;
-            max-width: 1200px;
-            padding: 24px;
-            box-sizing: border-box;
-            flex-grow: 1;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-bottom: 20px;
-            margin-bottom: 32px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .header h1 {
-            font-family: 'Outfit', sans-serif;
-            font-size: 24px;
-            font-weight: 700;
-            margin: 0;
-            background: linear-gradient(135deg, #fff 0%, #8e8e93 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .nav {
-            display: flex;
-            gap: 24px;
-        }
-
-        .nav a {
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-size: 15px;
-            font-weight: 500;
-            transition: var(--transition);
-            padding: 8px 0;
-            position: relative;
-        }
-
-        .nav a:hover {
-            color: var(--text);
-        }
-
-        .nav a.active {
-            color: var(--text);
-        }
-
-        .nav a.active::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background-color: var(--primary);
-            border-radius: 2px;
-        }
-
-        .content {
-            display: grid;
-            grid-template-columns: 380px 1fr;
-            gap: 24px;
-            align-items: start;
-        }
-
-        .card {
-            background-color: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            padding: 24px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-        }
-
-        .card h2 {
-            font-family: 'Outfit', sans-serif;
-            font-size: 18px;
-            font-weight: 600;
-            margin-top: 0;
-            margin-bottom: 24px;
-            color: var(--text-secondary);
-            letter-spacing: -0.02em;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-secondary);
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .form-group input {
-            width: 100%;
-            background-color: var(--surface-elevated);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            padding: 12px 14px;
-            color: var(--text);
-            font-size: 16px;
-            font-family: inherit;
-            box-sizing: border-box;
-            transition: var(--transition);
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
-        }
-
-        .input-row {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .input-row .label-fixed {
-            min-width: 60px;
-            font-size: 14px;
-            color: var(--text-secondary);
-        }
-
-        .input-row .unit-fixed {
-            min-width: 30px;
-            font-size: 14px;
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-
-        .timer-input-group {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-        }
-
-        .timer-unit {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .timer-unit input {
-            width: 100%;
-            text-align: center;
-        }
-
-        .timer-unit span {
-            font-size: 11px;
-            font-size: 10px;
-            color: var(--text-secondary);
-            font-weight: 700;
-            text-transform: uppercase;
-        }
-
-        .timer-display {
-            font-family: 'Outfit', sans-serif;
-            font-size: 64px;
-            font-weight: 700;
-            color: var(--success);
-            text-align: center;
-            margin: 24px 0;
-            font-variant-numeric: tabular-nums;
-            letter-spacing: -0.02em;
-        }
-
-        .controls-grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .btn {
-            padding: 14px 20px;
-            border: none;
-            border-radius: var(--radius-md);
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .btn:active {
-            transform: scale(0.98);
-        }
-
-        .btn[disabled] {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-start {
-            background-color: var(--success);
-            color: #000;
-        }
-
-        .btn-start:hover:not([disabled]) {
-            background-color: #3ee669;
-            box-shadow: 0 0 20px rgba(52, 199, 89, 0.3);
-        }
-
-        .btn-stop {
-            background-color: var(--danger);
-            color: #fff;
-        }
-
-        .btn-stop:hover:not([disabled]) {
-            background-color: #ff453a;
-            box-shadow: 0 0 20px rgba(255, 59, 48, 0.3);
-        }
-
-        .btn-reset {
-            background-color: var(--surface-elevated);
-            color: #fff;
-            border: 1px solid var(--border);
-        }
-
-        .btn-reset:hover:not([disabled]) {
-            background-color: #3a3a3c;
-        }
-
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 6px 12px;
-            background-color: var(--surface-elevated);
-            border-radius: 100px;
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--text-secondary);
-            border: 1px solid var(--border);
-        }
-
-        .status-badge .dot {
-            width: 8px;
-            height: 8px;
-            background-color: var(--text-secondary);
-            border-radius: 50%;
-            margin-right: 8px;
-        }
-
-        .status-running .dot {
-            background-color: var(--success);
-            box-shadow: 0 0 8px var(--success);
-            animation: pulse-dot 1.5s infinite;
-        }
-
-        @keyframes pulse-dot {
-            0% {
-                opacity: 1;
-                transform: scale(1);
-            }
-
-            50% {
-                opacity: 0.5;
-                transform: scale(1.2);
-            }
-
-            100% {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        .video-container {
-            background-color: #000;
-            border-radius: var(--radius-lg);
-            position: relative;
-            overflow: hidden;
-            aspect-ratio: 16 / 9;
-            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
-            border: 1px solid var(--border);
-        }
-
-        .video-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
-        .recording-indicator {
-            position: absolute;
-            top: 16px;
-            right: 16px;
-            background-color: rgba(255, 59, 48, 0.9);
-            color: #fff;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            backdrop-filter: blur(4px);
-            z-index: 10;
-        }
-
-        .recording-indicator::before {
-            content: '';
-            width: 8px;
-            height: 8px;
-            background-color: #fff;
-            border-radius: 50%;
-            animation: blink 1s infinite;
-        }
-
-        @keyframes blink {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.5;
-            }
-        }
-
-        .footer {
-            width: 100%;
-            text-align: center;
-            padding: 32px 24px;
-            font-size: 13px;
-            color: var(--text-secondary);
-            border-top: 1px solid var(--border);
-            margin-top: 48px;
-            box-sizing: border-box;
-        }
-
-        /* Responsive Styles */
-        @media screen and (max-width: 1024px) {
-            .content {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media screen and (max-width: 768px) {
-            .header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 20px;
-            }
-
-            .timer-display {
-                font-size: 48px;
-            }
-        }
-
-        @media screen and (max-width: 480px) {
-            .controls-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .nav {
-                width: 100%;
-                justify-content: space-between;
-                gap: 12px;
-            }
-
-            .nav a {
-                font-size: 14px;
-            }
-
-            .main-container {
-                padding: 16px;
-            }
-        }
-
-        /* Modal Styles */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(8px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: var(--transition);
-        }
-
-        .modal-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .modal-content {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            padding: 32px;
-            width: 100%;
-            max-width: 440px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-            transform: scale(0.9);
-            transition: var(--transition);
-        }
-
-        .modal-overlay.active .modal-content {
-            transform: scale(1);
-        }
-
-        .modal-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .modal-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-        }
-
-        .modal-icon.error {
-            background: rgba(255, 59, 48, 0.2);
-            color: var(--danger);
-        }
-
-        .modal-icon.warning {
-            background: rgba(255, 149, 0, 0.2);
-            color: var(--warning);
-        }
-
-        .modal-icon.info {
-            background: rgba(0, 122, 255, 0.2);
-            color: var(--primary);
-        }
-
-        .modal-title {
-            font-family: 'Outfit', sans-serif;
-            font-size: 20px;
-            font-weight: 700;
-            color: var(--text);
-            margin: 0;
-        }
-
-        .modal-body {
-            color: var(--text-secondary);
-            font-size: 15px;
-            line-height: 1.6;
-            margin-bottom: 24px;
-        }
-
-        .modal-footer {
-            display: flex;
-            justify-content: flex-end;
-        }
-
-        .modal-btn {
-            background: var(--primary);
-            color: #fff;
-            padding: 12px 24px;
-            border-radius: var(--radius-md);
-            border: none;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        .modal-btn:hover {
-            opacity: 0.9;
-            transform: translateY(-1px);
-        }
-    </style>
+  <style>
+    /* ===== CORE LAYOUT ===== */
+    .test-apparatus-container {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 1000px;
+      margin: 20px auto;
+      background: #fff;
+      border: 1px solid #e1e4e8;
+      border-radius: 8px;
+      overflow: hidden;
+      padding: 0 10px;
+    }
+
+    .header-section {
+      background: linear-gradient(135deg, #1a5f7a, #083344);
+      color: #fff;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .header-section h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    .meta-info {
+      background: #f8fafc;
+      padding: 15px 30px;
+      border-bottom: 1px solid #e1e4e8;
+      font-size: 0.95em;
+      color: #555;
+      font-style: italic;
+    }
+
+    .content-body {
+      padding: 30px;
+    }
+
+    /* ===== STEPS ===== */
+    .instruction-step {
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 1px dashed #cbd5e1;
+    }
+
+    .instruction-step:last-child {
+      border-bottom: none;
+    }
+
+    .step-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #1a5f7a;
+      color: #fff;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      font-weight: bold;
+      margin-right: 8px;
+    }
+
+    .step-title {
+      font-weight: 600;
+      font-size: 1.1em;
+      color: #0f172a;
+    }
+
+    /* ===== CODE BLOCK ===== */
+    .code-block {
+      background: #1e293b;
+      color: #38bdf8;
+      padding: 15px;
+      border-radius: 5px;
+      font-family: monospace;
+      margin: 10px 0;
+      word-break: break-word;
+    }
+
+    .code-block a {
+      color: inherit;
+      text-decoration: underline;
+    }
+
+    /* ===== TAGS & NOTES ===== */
+    .info-tag {
+      background: #dcfce7;
+      color: #166534;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.85em;
+      font-weight: 600;
+    }
+
+    .highlight-box {
+      background: #f0f9ff;
+      border-left: 4px solid #0ea5e9;
+      padding: 15px;
+      margin-top: 20px;
+    }
+
+    /* ===== IMAGE GALLERY ===== */
+    .image-gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+
+    .image-gallery a {
+      display: block;
+    }
+
+    .image-gallery img {
+      width: 100%;
+      height: auto;
+      border-radius: 10px;
+      cursor: zoom-in;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, .15);
+      transition: transform .25s ease;
+    }
+
+    .image-gallery img:hover {
+      transform: scale(1.03);
+    }
+
+    /* ===== LIGHTBOX ===== */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .9);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999999;
+    }
+
+    .lightbox:target {
+      display: flex;
+    }
+
+    .lightbox img {
+      max-width: 95%;
+      max-height: 95%;
+      border-radius: 10px;
+    }
+
+    .lightbox .close {
+      position: absolute;
+      top: 15px;
+      right: 20px;
+      font-size: 32px;
+      color: #fff;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    /* ===== MOBILE ===== */
+    @media (max-width: 480px) {
+      .content-body {
+        padding: 15px;
+      }
+
+      .image-gallery {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .next-button {
+      display: inline-block;
+      background: #1a5f7a;
+      color: #fff;
+      padding: 12px 24px;
+      text-decoration: none;
+      font-weight: bold;
+      border-radius: 5px;
+      transition: background 0.3s;
+    }
+
+    .next-button:hover {
+      background: #083344;
+    }
+
+    .emoji-icon {
+      height: 50px;
+      width: auto;
+      vertical-align: middle;
+      margin: 0 4px;
+      border-radius: 4px;
+    }
+
+    /* ===== RESPONSIVE IFRAME ===== */
+    .iframe-container {
+      position: relative;
+      width: 100%;
+      max-width: 560px;
+      margin: 30px auto;
+      aspect-ratio: 16 / 9;
+    }
+
+    .iframe-container iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+      border-radius: 8px;
+    }
+  </style>
 </head>
 
 <body>
-    <div class="main-container">
-        <div class="header">
-            <h1>Terminal Test Apparatus</h1>
-            <nav class="nav">
-                <a href="/" class="active">Home</a>
-                <a href="/history">Test History</a>
-                <a href="/system-info">System Info</a>
-            </nav>
-        </div>
+  <div class="test-apparatus-container">
+    <header class="header-section">
+      <h1>
+        Instructions for using Automated Terminal (Damage to Conductor) Test
+        Apparatus
+      </h1>
+    </header>
 
-        <div class="content">
-            <div class="card">
-                <h2>Test Configuration</h2>
-
-                <div class="form-group">
-                    <label>Sample Details</label>
-                    <input type="text" id="sample-code" value="25EABC000" placeholder="Sample Code">
-                    <input type="text" id="sample-type" placeholder="Sample Type (e.g. Switch)"
-                        style="margin-top: 8px;">
-                </div>
-
-                <div class="form-group">
-                    <label>Standard (IS Code)</label>
-                    <input type="text" id="is-code" value="3854:1997">
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 20px;">
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label>Rating (A)</label>
-                        <input type="text" id="rating" placeholder="10">
-                    </div>
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label>Height (mm)</label>
-                        <input type="text" id="height" placeholder="270">
-                    </div>
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label>Weight (g)</label>
-                        <input type="text" id="weight" placeholder="400">
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Test Duration</label>
-                    <div class="timer-input-group">
-                        <div class="timer-unit">
-                            <input type="number" id="hours" value="0" min="0">
-                            <span>Hours</span>
-                        </div>
-                        <div class="timer-unit">
-                            <input type="number" id="minutes" value="15" min="0" max="59">
-                            <span>Mins</span>
-                        </div>
-                        <div class="timer-unit">
-                            <input type="number" id="seconds" value="00" min="0" max="59">
-                            <span>Secs</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="timer-display" id="time-left">00:15:00</div>
-
-                <div class="controls-grid">
-                    <button id="start-btn" class="btn btn-start">START TEST</button>
-                    <button id="reset-btn" class="btn btn-reset">RESET</button>
-                </div>
-                <button id="stop-btn" class="btn btn-stop" style="width: 100%; margin-bottom: 20px;" disabled>STOP
-                    TEST</button>
-
-                <div class="status-badge" id="status-container">
-                    <div class="dot"></div>
-                    <span id="status">Idle</span>
-                </div>
-            </div>
-
-            <div class="card video-card">
-                <h2>Live Monitoring</h2>
-                <div class="video-container">
-                    <div class="recording-indicator" style="display: none;">REC</div>
-                    <img id="live-feed-img" src="/api/camera/feed" alt="Live Stream">
-                </div>
-                <button id="toggle-feed-btn" class="btn btn-reset"
-                    style="width: fit-content; align-self: flex-start;">Stop Feed</button>
-            </div>
-        </div>
-    </div>
-    <footer class="footer">
-        Automated Terminal Test Apparatus &bull; 2025
-    </footer>
-
-    <!-- Custom Modal -->
-    <div id="custom-modal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div id="modal-icon" class="modal-icon">!</div>
-                <h3 id="modal-title" class="modal-title">Alert</h3>
-            </div>
-            <div id="modal-body" class="modal-body">
-                Message content goes here.
-            </div>
-            <div class="modal-footer">
-                <button id="modal-close" class="modal-btn">Dismiss</button>
-            </div>
-        </div>
+    <div class="meta-info">
+      Automated Terminal Test Apparatus using
+      <strong>Raspberry Pi</strong> with camera module and
+      <strong>IR reflective sensor</strong> for testing household switches
+      <span class="info-tag">IS 3854</span> and plugs &amp; socket outlets
+      <span class="info-tag">IS 1293</span>.
     </div>
 
-    <script>
-        const timeLeftDisplay = document.getElementById('time-left');
-        const startBtn = document.getElementById('start-btn');
-        const stopBtn = document.getElementById('stop-btn');
-        const resetBtn = document.getElementById('reset-btn');
-        const statusDisplay = document.getElementById('status');
-        const sampleCodeInput = document.getElementById('sample-code');
-        const sampleTypeInput = document.getElementById('sample-type');
-        const isCodeInput = document.getElementById('is-code');
-        const ratingInput = document.getElementById('rating');
-        const heightInput = document.getElementById('height');
-        const weightInput = document.getElementById('weight');
-        const hoursInput = document.getElementById('hours');
-        const minutesInput = document.getElementById('minutes');
-        const secondsInput = document.getElementById('seconds');
-        const recordingIndicator = document.querySelector('.recording-indicator');
-        const toggleFeedBtn = document.getElementById('toggle-feed-btn');
-        const liveFeedImg = document.getElementById('live-feed-img');
-        const modal = document.getElementById('custom-modal');
-        const modalTitle = document.getElementById('modal-title');
-        const modalBody = document.getElementById('modal-body');
-        const modalIcon = document.getElementById('modal-icon');
-        const modalClose = document.getElementById('modal-close');
+    <div class="content-body">
+      <div class="instruction-step">
+        <span class="step-number">1</span>
+        <span class="step-title">Power and Initialization</span>
+        <p>Power on <img id="emoji_power" src="" alt="power" class="emoji-icon"> the
+          18w DC Adapter. Wait for 1-2 minutes for the system to boot and initialize the sensors.
+        </p>
+        <div class="image-gallery">
+          <a href="#img1"><img alt="Power On" id="view1" loading="lazy" src="" /></a>
+        </div>
+      </div>
 
-        function showModal(title, message, type = 'info') {
-            modalTitle.textContent = title;
-            modalBody.textContent = message;
+      <div class="instruction-step">
+        <span class="step-number">2</span>
+        <span class="step-title">Network Connection</span>
+        <p>
+          Check the IP address on the screen and type the address with port
+          8080 in your browser.
+        </p>
+        <div class="code-block">
+          http://[Device_IP_ADDRESS]:8080<br />
+          <a href="http://192.168.2.175:8080">
+            Example: http://192.168.2.175:8080
+          </a>
+        </div>
+      </div>
 
-            // Set icon and theme
-            modalIcon.className = `modal-icon ${type}`;
-            if (type === 'error') modalIcon.textContent = '✕';
-            else if (type === 'warning') modalIcon.textContent = '⚠';
-            else modalIcon.textContent = 'i';
+      <div class="instruction-step">
+        <span class="step-number">3</span>
+        <span class="step-title">Starting the Test</span>
+        <p>
+          On the homepage, enter the Sample code and IS code. Set the timer
+          and click <strong>"Start Test"</strong>.
+        </p>
+        <div class="image-gallery">
+          <a href="#img2"><img alt="Homepage" id="view2" loading="lazy" src="" /></a>
+        </div>
+      </div>
 
-            modal.classList.add('active');
-        }
+      <div class="instruction-step">
+        <span class="step-number">4</span>
+        <span class="step-title">Automated Monitoring</span>
+        <p>
+          If the weight drops, the system records a
+          <strong>Test Failure</strong> automatically.
+        </p>
+        <div class="image-gallery">
+          <a href="#img3"><img alt="Test Failure" id="view3" loading="lazy" src="" /></a>
+        </div>
+      </div>
 
-        modalClose.onclick = () => modal.classList.remove('active');
-        modal.onclick = (e) => { if (e.target === modal) modal.classList.remove('active'); };
+      <div class="instruction-step">
+        <span class="step-number">5</span>
+        <span class="step-title">Reviewing History</span>
+        <p>
+          View test result logs and download recording videos in the
+          <strong>Test History Page</strong>.
+        </p>
+        <div class="image-gallery">
+          <a href="#img4"><img alt="History" id="view4" loading="lazy" src="" /></a>
+          <a href="#img5"><img alt="Video" id="view5" loading="lazy" src="" /></a>
+          <a href="#img6"><img alt="Results" id="view6" loading="lazy" src="" /></a>
+        </div>
+      </div>
 
-        let timer;
-        let statusPoller;
-        let currentLogId = null;
-        let isFeedRunning = true;
+      <div class="instruction-step">
+        <span class="step-number">6</span>
+        <span class="step-title">System Management</span>
+        <p>
+          Monitor CPU, Memory, and Storage usage in the
+          <strong>System Info Page</strong>.
+        </p>
+        <div class="image-gallery">
+          <a href="#img7"><img alt="System Info" id="view7" loading="lazy" src="" /></a>
+        </div>
+        <div class="highlight-box">
+          <strong>Note:</strong> Always perform a proper system shutdown
+          before removing power.
+        </div>
+      </div>
+      <div class="iframe-container">
+                <iframe src="https://www.youtube-nocookie.com/embed/_Rnq734jfGA?si=ysaAAyoffBNK28h2"
+                    title="YouTube video player" frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+            </div>
+      <div style="text-align: center; margin-top: 40px;">
+        <a class="next-button"
+          href="/index2.html"
+          onclick="location.href=this.href+'?reload='+Date.now(); return false;">
+          Setting Up Network Access
+        </a>
+      </div>
+    </div>
+  </div>
 
-        function formatTime(secs) {
-            const hours = Math.floor(secs / 3600).toString().padStart(2, '0');
-            const minutes = Math.floor((secs % 3600) / 60).toString().padStart(2, '0');
-            const seconds = (secs % 60).toString().padStart(2, '0');
-            return `${hours}:${minutes}:${seconds}`;
-        }
+  <div class="lightbox" id="img1">
+    <a class="close" href="#">×</a><img id="full1" src="" />
+  </div>
+  <div class="lightbox" id="img2">
+    <a class="close" href="#">×</a><img id="full2" src="" />
+  </div>
+  <div class="lightbox" id="img3">
+    <a class="close" href="#">×</a><img id="full3" src="" />
+  </div>
+  <div class="lightbox" id="img4">
+    <a class="close" href="#">×</a><img id="full4" src="" />
+  </div>
+  <div class="lightbox" id="img5">
+    <a class="close" href="#">×</a><img id="full5" src="" />
+  </div>
+  <div class="lightbox" id="img6">
+    <a class="close" href="#">×</a><img id="full6" src="" />
+  </div>
+  <div class="lightbox" id="img7">
+    <a class="close" href="#">×</a><img id="full7" src="" />
+  </div>
 
-        function getDurationFromInputs() {
-            const hours = parseInt(hoursInput.value, 10) || 0;
-            const minutes = parseInt(minutesInput.value, 10) || 0;
-            const seconds = parseInt(secondsInput.value, 10) || 0;
-            return (hours * 3600) + (minutes * 60) + seconds;
-        }
+  <script>
+    (function () {
+      const imgLinks = {
+        emojiPower: "https://raw.githubusercontent.com/lucifermorningstarthedevil69/RaspberryPI-Camera-Automation/refs/heads/main/screenshots/power-on.gif",
+        power: "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgoQwE1OTRr-cz05jfYXpvNHkDSoc70lTm2fmN1kl6FN02NH9UGdvolFqqKMRLmUYC7vAh7VYLgHherRR_7m8Vp0nsAibkloZF5UBtOjTezI1tWUcL4I3UwzCNmwzf8o24xUCjA_pQlHy4-1-QLM0xIA_tLwafOf3mPK7yjr1mCMsdFvvo92_AuqhzQ7txM/s1024/power%20on.jpg",
+        home: "https://github.com/lucifermorningstarthedevil69/RaspberryPI-Camera-Automation/blob/main/screenshots/index.png?raw=true",
+        fail: "https://github.com/lucifermorningstarthedevil69/RaspberryPI-Camera-Automation/raw/main/screenshots/alert%20test%20fail.png",
+        hist: "https://github.com/lucifermorningstarthedevil69/RaspberryPI-Camera-Automation/blob/main/screenshots/test%20history.png?raw=true",
+        vid: "https://github.com/lucifermorningstarthedevil69/RaspberryPI-Camera-Automation/blob/main/screenshots/video%20play.png?raw=true",
+        res: "https://github.com/lucifermorningstarthedevil69/RaspberryPI-Camera-Automation/blob/main/screenshots/test%20report.png?raw=true",
+        sys: "https://github.com/lucifermorningstarthedevil69/RaspberryPI-Camera-Automation/blob/main/screenshots/sys%20info.png?raw=true"
+      };
+      const mapping = [
+        { id: 1, url: imgLinks.power },
+        { id: 2, url: imgLinks.home },
+        { id: 3, url: imgLinks.fail },
+        { id: 4, url: imgLinks.hist },
+        { id: 5, url: imgLinks.vid },
+        { id: 6, url: imgLinks.res },
+        { id: 7, url: imgLinks.sys }
+      ];
 
-        function startUiUpdate(endTime) {
-            clearInterval(timer);
-
-            const updateTimer = () => {
-                const now = new Date();
-                const remaining = Math.round((endTime - now) / 1000);
-
-                if (remaining >= 0) {
-                    timeLeftDisplay.textContent = formatTime(remaining);
-                } else {
-                    clearInterval(timer);
-                }
-            };
-
-            updateTimer();
-            timer = setInterval(updateTimer, 1000);
-
-            clearInterval(statusPoller);
-            statusPoller = setInterval(checkServerState, 2000);
-
-            statusDisplay.textContent = 'Running...';
-            recordingIndicator.style.display = 'flex';
-            startBtn.disabled = true;
-            stopBtn.disabled = false;
-            [hoursInput, minutesInput, secondsInput, sampleCodeInput, sampleTypeInput, isCodeInput, ratingInput, heightInput, weightInput, resetBtn, toggleFeedBtn].forEach(el => el.disabled = true);
-        }
-
-        async function startTest() {
-            if (!isFeedRunning) {
-                showModal("Camera Required", "Please start the camera feed before starting a test.", "warning");
-                return;
-            }
-            const duration = getDurationFromInputs();
-            if (duration <= 0) return;
-
-            try {
-                const appendUnit = (val, unit) => {
-                    if (!val) return "";
-                    val = val.toString().trim();
-                    return val.endsWith(unit) ? val : val + " " + unit;
-                };
-
-                const response = await fetch('/api/test/start', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        sample_code: sampleCodeInput.value,
-                        sample_type: sampleTypeInput.value,
-                        is_code: isCodeInput.value,
-                        rating: appendUnit(ratingInput.value, "A"),
-                        height: appendUnit(heightInput.value, "mm"),
-                        weight: appendUnit(weightInput.value, "g"),
-                        duration: duration
-                    })
-                });
-
-                if (response.status === 409) {
-                    showModal("Test in Progress", "A test is already in progress.", "warning");
-                    checkServerState();
-                    return;
-                }
-                const data = await response.json();
-                currentLogId = data.log.id;
-
-                // Sync with server time
-                const serverNow = new Date(data.server_time);
-                const serverStart = new Date(data.log.time);
-                const elapsedOnServer = serverNow.getTime() - serverStart.getTime();
-                const clientNow = new Date();
-                const endTime = new Date(clientNow.getTime() + (duration * 1000 - elapsedOnServer));
-
-                startUiUpdate(endTime);
-
-            } catch (error) {
-                console.error("Failed to start test:", error);
-                statusDisplay.textContent = 'Error starting test';
-            }
-        }
-
-        async function stopTest() {
-            if (!currentLogId) return;
-            try {
-                await fetch('/api/test/stop', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: currentLogId, status: 'Fail' })
-                });
-                resetUi();
-            } catch (error) {
-                console.error("Failed to stop test:", error);
-                statusDisplay.textContent = 'Error stopping test';
-            }
-        }
-
-        function resetUi() {
-            clearInterval(timer);
-            clearInterval(statusPoller);
-            const duration = getDurationFromInputs();
-            timeLeftDisplay.textContent = formatTime(duration);
-            statusDisplay.textContent = 'Idle';
-            recordingIndicator.style.display = 'none';
-            startBtn.disabled = false;
-            stopBtn.disabled = true;
-            [hoursInput, minutesInput, secondsInput, sampleCodeInput, sampleTypeInput, isCodeInput, ratingInput, heightInput, weightInput, resetBtn, toggleFeedBtn].forEach(el => el.disabled = false);
-            currentLogId = null;
-        }
-
-        async function toggleFeed() {
-            if (isFeedRunning) {
-                try {
-                    const response = await fetch('/api/camera/release', { method: 'POST' });
-                    if (response.ok) {
-                        liveFeedImg.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
-                        toggleFeedBtn.textContent = 'Start Feed';
-                        isFeedRunning = false;
-                    } else {
-                        const data = await response.json();
-                        showModal("Feed Error", data.status || "Could not stop feed.", "error");
-                    }
-                } catch (error) {
-                    console.error("Failed to stop camera feed:", error);
-                    showModal("Camera Error", "An error occurred while trying to stop the feed.", "error");
-                }
-            } else {
-                liveFeedImg.src = '/api/camera/feed?_=' + new Date().getTime();
-                toggleFeedBtn.textContent = 'Stop Feed';
-                isFeedRunning = true;
-            }
-        }
-
-        async function checkServerState() {
-            try {
-                const response = await fetch('/api/test/status');
-                const data = await response.json();
-
-                if (data.running) {
-                    if (!currentLogId) {
-                        currentLogId = data.log.id;
-                        const totalDuration = data.log.duration;
-
-                        // Sync with server time
-                        const serverNow = new Date(data.server_time);
-                        const serverStart = new Date(data.log.time);
-                        const elapsedOnServer = serverNow.getTime() - serverStart.getTime();
-                        const clientNow = new Date();
-                        const endTime = new Date(clientNow.getTime() + (totalDuration * 1000 - elapsedOnServer));
-
-                        sampleCodeInput.value = data.log.sample_code || '';
-                        sampleTypeInput.value = data.log.sample_type || '';
-                        isCodeInput.value = data.log.is_code || '';
-                        ratingInput.value = (data.log.rating || '').replace(/\s*A$/, "");
-                        heightInput.value = (data.log.height || '').replace(/\s*mm$/, "");
-                        weightInput.value = (data.log.weight || '').replace(/\s*N$/, "");
-                        const h = Math.floor(totalDuration / 3600);
-                        const m = Math.floor((totalDuration % 3600) / 60);
-                        const s = totalDuration % 60;
-                        hoursInput.value = h;
-                        minutesInput.value = m;
-                        secondsInput.value = s;
-
-                        startUiUpdate(endTime);
-                    }
-                } else {
-                    if (currentLogId) {
-                        const logResponse = await fetch('/api/test/logs');
-                        const logs = await logResponse.json();
-                        const finishedLog = logs.find(log => log.id === currentLogId);
-
-                        if (finishedLog && finishedLog.status === 'Fail' && finishedLog.failure_reason === 'Weight Fallen Down!') {
-                            showModal("Test Failed", "Test failed due to Weight Fell Down!", "error");
-                        }
-
-                        resetUi();
-                    }
-                }
-            } catch (error) {
-                console.error("Failed to check server state:", error);
-                statusDisplay.textContent = 'Connection error';
-                resetUi();
-            }
-        }
-
-        // Event Listeners
-        startBtn.addEventListener('click', startTest);
-        stopBtn.addEventListener('click', stopTest);
-        resetBtn.addEventListener('click', resetUi);
-        toggleFeedBtn.addEventListener('click', toggleFeed);
-
-        // Initial setup
-        document.addEventListener('DOMContentLoaded', () => {
-            checkServerState();
-            // Ensure UI is synced with default inputs on load if no test is running
-            if (!currentLogId) {
-                const duration = getDurationFromInputs();
-                timeLeftDisplay.textContent = formatTime(duration);
-            }
+      // This function runs only after the page is ready
+      function initImages() {
+        mapping.forEach(item => {
+          const thumb = document.getElementById('view' + item.id);
+          const full = document.getElementById('full' + item.id);
+          if (thumb) thumb.src = item.url;
+          if (full) full.src = item.url;
         });
+      }
 
-    </script>
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initImages);
+      } else {
+        initImages();
+      }
+    })();
+  </script>
 </body>
 
 </html>
