@@ -292,104 +292,115 @@
           <strong>Test History Page</strong>.
         </p>
         <div class="image-gallery">
-          <a href="#img4"><img alt="History" id="view4" loading="lazy" src="" /></a>
-          <a href="#img5"><img alt="Video" id="view5" loading="lazy" src="" /></a>
-          <a href="#img6"><img alt="Results" id="view6" loading="lazy" src="" /></a>
+          <div class="gallery-item">
+            <a href="#img4"><img alt="History" id="p1_view4" loading="lazy" src="" /></a>
+            <div class="image-caption">The <strong>Test History</strong> tab shows a complete list of all
+              test statuses (Pass/Fail), providing a clear overview of your test history.</div>
+          </div>
+          <div class="gallery-item">
+            <a href="#img5"><img alt="Video" id="p1_view5" loading="lazy" src="" /></a>
+            <div class="image-caption">Click the <strong>'View'</strong> button to start instant video
+              playback of the recorded test session for detailed analysis.</div>
+          </div>
+          <div class="gallery-item">
+            <a href="#img6"><img alt="Results" id="p1_view6" loading="lazy" src="" /></a>
+            <div class="image-caption">Easily <strong>Download</strong> videos or <strong>Generate
+                Reports</strong> from logs. An option to <strong>Delete</strong> records is also
+              available.</div>
+          </div>
         </div>
-      </div>
 
-      <div class="instruction-step">
-        <span class="step-number">6</span>
-        <span class="step-title">System Management</span>
-        <p>
-          Monitor CPU, Memory, and Storage usage in the
-          <strong>System Info Page</strong>.
-        </p>
-        <div class="image-gallery">
-          <a href="#img7"><img alt="System Info" id="view7" loading="lazy" src="" /></a>
+        <div class="instruction-step">
+          <span class="step-number">6</span>
+          <span class="step-title">System Management</span>
+          <p>
+            Monitor CPU, Memory, and Storage usage in the
+            <strong>System Info Page</strong>.
+          </p>
+          <div class="image-gallery">
+            <a href="#img7"><img alt="System Info" id="view7" loading="lazy" src="" /></a>
+          </div>
+          <div class="highlight-box">
+            <strong>Note:</strong> Always perform a proper system shutdown
+            before removing power.
+          </div>
         </div>
-        <div class="highlight-box">
-          <strong>Note:</strong> Always perform a proper system shutdown
-          before removing power.
+        <div class="iframe-container">
+          <iframe src="https://www.youtube-nocookie.com/embed/_Rnq734jfGA?si=ysaAAyoffBNK28h2"
+            title="YouTube video player" frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
         </div>
-      </div>
-      <div class="iframe-container">
-                <iframe src="https://www.youtube-nocookie.com/embed/_Rnq734jfGA?si=ysaAAyoffBNK28h2"
-                    title="YouTube video player" frameborder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-            </div>
-      <div style="text-align: center; margin-top: 40px;">
-        <a class="next-button"
-          href="/index2.html"
-          onclick="location.href=this.href+'?reload='+Date.now(); return false;">
-          Setting Up Network Access
-        </a>
+        <div style="text-align: center; margin-top: 40px;">
+          <a class="next-button" href="/index2.html"
+            onclick="location.href=this.href+'?reload='+Date.now(); return false;">
+            Setting Up Network Access
+          </a>
+        </div>
       </div>
     </div>
-  </div>
 
-  <div class="lightbox" id="img1">
-    <a class="close" href="#">×</a><img id="full1" src="" />
-  </div>
-  <div class="lightbox" id="img2">
-    <a class="close" href="#">×</a><img id="full2" src="" />
-  </div>
-  <div class="lightbox" id="img3">
-    <a class="close" href="#">×</a><img id="full3" src="" />
-  </div>
-  <div class="lightbox" id="img4">
-    <a class="close" href="#">×</a><img id="full4" src="" />
-  </div>
-  <div class="lightbox" id="img5">
-    <a class="close" href="#">×</a><img id="full5" src="" />
-  </div>
-  <div class="lightbox" id="img6">
-    <a class="close" href="#">×</a><img id="full6" src="" />
-  </div>
-  <div class="lightbox" id="img7">
-    <a class="close" href="#">×</a><img id="full7" src="" />
-  </div>
+    <div class="lightbox" id="img1">
+      <a class="close" href="#">×</a><img id="full1" src="" />
+    </div>
+    <div class="lightbox" id="img2">
+      <a class="close" href="#">×</a><img id="full2" src="" />
+    </div>
+    <div class="lightbox" id="img3">
+      <a class="close" href="#">×</a><img id="full3" src="" />
+    </div>
+    <div class="lightbox" id="img4">
+      <a class="close" href="#">×</a><img id="full4" src="" />
+    </div>
+    <div class="lightbox" id="img5">
+      <a class="close" href="#">×</a><img id="full5" src="" />
+    </div>
+    <div class="lightbox" id="img6">
+      <a class="close" href="#">×</a><img id="full6" src="" />
+    </div>
+    <div class="lightbox" id="img7">
+      <a class="close" href="#">×</a><img id="full7" src="" />
+    </div>
 
-  <script>
-    (function () {
-      const imgLinks = {
-        emojiPower: "https://raw.githubusercontent.com/lucifermorningstarthedevil69/RaspberryPI-Camera-Automation/refs/heads/main/screenshots/power-on.gif",
-        power: "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgoQwE1OTRr-cz05jfYXpvNHkDSoc70lTm2fmN1kl6FN02NH9UGdvolFqqKMRLmUYC7vAh7VYLgHherRR_7m8Vp0nsAibkloZF5UBtOjTezI1tWUcL4I3UwzCNmwzf8o24xUCjA_pQlHy4-1-QLM0xIA_tLwafOf3mPK7yjr1mCMsdFvvo92_AuqhzQ7txM/s1024/power%20on.jpg",
-        home: "https://github.com/lucifermorningstarthedevil69/RaspberryPI-Camera-Automation/blob/main/screenshots/index.png?raw=true",
-        fail: "https://github.com/lucifermorningstarthedevil69/RaspberryPI-Camera-Automation/raw/main/screenshots/alert%20test%20fail.png",
-        hist: "https://github.com/lucifermorningstarthedevil69/RaspberryPI-Camera-Automation/blob/main/screenshots/test%20history.png?raw=true",
-        vid: "https://github.com/lucifermorningstarthedevil69/RaspberryPI-Camera-Automation/blob/main/screenshots/video%20play.png?raw=true",
-        res: "https://github.com/lucifermorningstarthedevil69/RaspberryPI-Camera-Automation/blob/main/screenshots/test%20report.png?raw=true",
-        sys: "https://github.com/lucifermorningstarthedevil69/RaspberryPI-Camera-Automation/blob/main/screenshots/sys%20info.png?raw=true"
-      };
-      const mapping = [
-        { id: 1, url: imgLinks.power },
-        { id: 2, url: imgLinks.home },
-        { id: 3, url: imgLinks.fail },
-        { id: 4, url: imgLinks.hist },
-        { id: 5, url: imgLinks.vid },
-        { id: 6, url: imgLinks.res },
-        { id: 7, url: imgLinks.sys }
-      ];
+    <script>
+      (function () {
+        const imgLinks = {
+          emojiPower: "https://raw.githubusercontent.com/lucifermorningstarthedevil69/RaspberryPI-Camera-Automation/refs/heads/main/screenshots/power-on.gif",
+          power: "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgoQwE1OTRr-cz05jfYXpvNHkDSoc70lTm2fmN1kl6FN02NH9UGdvolFqqKMRLmUYC7vAh7VYLgHherRR_7m8Vp0nsAibkloZF5UBtOjTezI1tWUcL4I3UwzCNmwzf8o24xUCjA_pQlHy4-1-QLM0xIA_tLwafOf3mPK7yjr1mCMsdFvvo92_AuqhzQ7txM/s1024/power%20on.jpg",
+          home: "https://github.com/lucifermorningstarthedevil69/RaspberryPI-Camera-Automation/blob/main/screenshots/index.png?raw=true",
+          fail: "https://github.com/lucifermorningstarthedevil69/RaspberryPI-Camera-Automation/raw/main/screenshots/alert%20test%20fail.png",
+          hist: "https://github.com/lucifermorningstarthedevil69/RaspberryPI-Camera-Automation/blob/main/screenshots/test%20history.png?raw=true",
+          vid: "https://github.com/lucifermorningstarthedevil69/RaspberryPI-Camera-Automation/blob/main/screenshots/video%20play.png?raw=true",
+          res: "https://github.com/lucifermorningstarthedevil69/RaspberryPI-Camera-Automation/blob/main/screenshots/test%20report.png?raw=true",
+          sys: "https://github.com/lucifermorningstarthedevil69/RaspberryPI-Camera-Automation/blob/main/screenshots/sys%20info.png?raw=true"
+        };
+        const mapping = [
+          { id: 1, url: imgLinks.power },
+          { id: 2, url: imgLinks.home },
+          { id: 3, url: imgLinks.fail },
+          { id: 4, url: imgLinks.hist },
+          { id: 5, url: imgLinks.vid },
+          { id: 6, url: imgLinks.res },
+          { id: 7, url: imgLinks.sys }
+        ];
 
-      // This function runs only after the page is ready
-      function initImages() {
-        mapping.forEach(item => {
-          const thumb = document.getElementById('view' + item.id);
-          const full = document.getElementById('full' + item.id);
-          if (thumb) thumb.src = item.url;
-          if (full) full.src = item.url;
-        });
-      }
+        // This function runs only after the page is ready
+        function initImages() {
+          mapping.forEach(item => {
+            const thumb = document.getElementById('view' + item.id);
+            const full = document.getElementById('full' + item.id);
+            if (thumb) thumb.src = item.url;
+            if (full) full.src = item.url;
+          });
+        }
 
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initImages);
-      } else {
-        initImages();
-      }
-    })();
-  </script>
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', initImages);
+        } else {
+          initImages();
+        }
+      })();
+    </script>
 </body>
 
 </html>
