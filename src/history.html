@@ -356,6 +356,129 @@
                 width: 100%;
             }
         }
+
+        /* Custom Modal Styles */
+        .custom-modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .custom-modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .custom-modal {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            width: 90%;
+            max-width: 400px;
+            padding: 24px;
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+            transform: translateY(20px) scale(0.95);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .custom-modal-overlay.active .custom-modal {
+            transform: translateY(0) scale(1);
+        }
+
+        .custom-modal-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .custom-modal-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .custom-modal-icon.error {
+            background-color: rgba(255, 59, 48, 0.1);
+            color: var(--danger);
+        }
+
+        .custom-modal-icon.info {
+            background-color: rgba(0, 122, 255, 0.1);
+            color: var(--primary);
+        }
+
+        .custom-modal-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text);
+            margin: 0;
+        }
+
+        .custom-modal-message {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 24px;
+        }
+
+        .custom-modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .custom-modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .custom-modal-btn.primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .custom-modal-btn.primary:hover {
+            background-color: #0056b3;
+        }
+        
+        .custom-modal-btn.danger {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .custom-modal-btn.danger:hover {
+            background-color: #ff453a;
+        }
+
+        .custom-modal-btn.cancel {
+            background-color: var(--surface-elevated);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .custom-modal-btn.cancel:hover {
+            background-color: #3a3a3c;
+        }
     </style>
 </head>
 
@@ -399,7 +522,72 @@
     Automated Terminal Test Apparatus © 2026
     </footer>
 
+    <!-- Custom Modal -->
+    <div class="custom-modal-overlay" id="custom-modal-overlay">
+        <div class="custom-modal">
+            <div class="custom-modal-header">
+                <div class="custom-modal-icon error" id="custom-modal-icon">?</div>
+                <h3 class="custom-modal-title" id="custom-modal-title">Alert</h3>
+            </div>
+            <div class="custom-modal-message" id="custom-modal-message"></div>
+            <div class="custom-modal-actions" id="custom-modal-actions">
+                <button class="custom-modal-btn primary" id="custom-modal-dismiss-btn">Dismiss</button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        function showCustomAlert(title, message, isError = true) {
+            const overlay = document.getElementById('custom-modal-overlay');
+            const icon = document.getElementById('custom-modal-icon');
+            const actions = document.getElementById('custom-modal-actions');
+            
+            document.getElementById('custom-modal-title').textContent = title;
+            document.getElementById('custom-modal-message').textContent = message;
+            
+            icon.className = 'custom-modal-icon ' + (isError ? 'error' : 'info');
+            icon.textContent = isError ? '!' : 'i';
+            
+            actions.innerHTML = `<button class="custom-modal-btn primary" id="custom-modal-dismiss-btn">Dismiss</button>`;
+            
+            document.getElementById('custom-modal-dismiss-btn').onclick = () => {
+                overlay.classList.remove('active');
+            };
+            
+            overlay.classList.add('active');
+        }
+
+        function showCustomConfirm(title, message, isDanger = true) {
+            return new Promise((resolve) => {
+                const overlay = document.getElementById('custom-modal-overlay');
+                const icon = document.getElementById('custom-modal-icon');
+                const actions = document.getElementById('custom-modal-actions');
+                
+                document.getElementById('custom-modal-title').textContent = title;
+                document.getElementById('custom-modal-message').textContent = message;
+                
+                icon.className = 'custom-modal-icon ' + (isDanger ? 'error' : 'info');
+                icon.innerHTML = isDanger ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>' : 'i';
+                
+                actions.innerHTML = `
+                    <button class="custom-modal-btn cancel" id="custom-modal-cancel">Cancel</button>
+                    <button class="custom-modal-btn ${isDanger ? 'danger' : 'primary'}" id="custom-modal-confirm">Confirm</button>
+                `;
+                
+                overlay.classList.add('active');
+                
+                document.getElementById('custom-modal-cancel').onclick = () => {
+                    overlay.classList.remove('active');
+                    resolve(false);
+                };
+                
+                document.getElementById('custom-modal-confirm').onclick = () => {
+                    overlay.classList.remove('active');
+                    resolve(true);
+                };
+            });
+        }
+
         let allLogs = [];
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -528,11 +716,13 @@
             const filename = target.dataset.filename;
 
             if (target.classList.contains('btn-delete-both')) {
-                if (confirm('Are you sure you want to delete this record and its associated video?')) {
+                const confirmed = await showCustomConfirm('Delete Record', 'Are you sure you want to delete this record and its associated video?');
+                if (confirmed) {
                     await deleteLog(logId);
                 }
             } else if (target.classList.contains('btn-delete-only')) {
-                if (confirm('Are you sure you want to delete only the video for this record?')) {
+                const confirmed = await showCustomConfirm('Delete Video', 'Are you sure you want to delete only the video for this record?');
+                if (confirmed) {
                     await deleteVideoFile(logId);
                 }
             } else if (target.classList.contains('btn-download-log')) {
@@ -554,11 +744,11 @@
                     fetchLogs(); // Refresh list
                 } else {
                     const err = await response.json();
-                    alert(`Failed to delete log: ${err.status}`);
+                    showCustomAlert("Error", `Failed to delete log: ${err.status}`, true);
                 }
             } catch (error) {
                 console.error("Error deleting log:", error);
-                alert("An error occurred while deleting the log.");
+                showCustomAlert("Error", "An error occurred while deleting the log.", true);
             }
         }
 
@@ -569,11 +759,11 @@
                     fetchLogs(); // Refresh list
                 } else {
                     const err = await response.json();
-                    alert(`Failed to delete video: ${err.status}`);
+                    showCustomAlert("Error", `Failed to delete video: ${err.status}`, true);
                 }
             } catch (error) {
                 console.error("Error deleting video:", error);
-                alert("An error occurred while deleting the video.");
+                showCustomAlert("Error", "An error occurred while deleting the video.", true);
             }
         }
 
@@ -596,5 +786,4 @@
         }
     </script>
 </body>
-
 </html>

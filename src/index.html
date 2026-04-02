@@ -386,6 +386,110 @@
             box-sizing: border-box;
         }
 
+        /* Custom Modal Styles */
+        .custom-modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .custom-modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .custom-modal {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            width: 90%;
+            max-width: 400px;
+            padding: 24px;
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+            transform: translateY(20px) scale(0.95);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .custom-modal-overlay.active .custom-modal {
+            transform: translateY(0) scale(1);
+        }
+
+        .custom-modal-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .custom-modal-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .custom-modal-icon.error {
+            background-color: rgba(255, 59, 48, 0.1);
+            color: var(--danger);
+        }
+
+        .custom-modal-icon.info {
+            background-color: rgba(0, 122, 255, 0.1);
+            color: var(--primary);
+        }
+
+        .custom-modal-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text);
+            margin: 0;
+        }
+
+        .custom-modal-message {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 24px;
+        }
+
+        .custom-modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .custom-modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .custom-modal-btn.primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .custom-modal-btn.primary:hover {
+            background-color: #0056b3;
+        }
+
         /* Responsive Styles */
         @media screen and (max-width: 1024px) {
             .content {
@@ -476,7 +580,7 @@
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
                     <div class="form-group" style="margin-bottom: 0;">
-                        <label>Cross-Sectional Area (sq.mm)</label>
+                        <label>Cross-Sectional Area (mm²)</label>
                         <select id="area">
                             <option value="0.5">0.5</option>
                             <option value="0.75">0.75</option>
@@ -552,10 +656,40 @@
         </div>
     </div>
     <footer class="footer">
-        Automated Terminal Test Apparatus &bull; 2026
+        Automated Terminal Test Apparatus &bull; 2025
     </footer>
 
+    <!-- Custom Modal -->
+    <div class="custom-modal-overlay" id="custom-modal-overlay">
+        <div class="custom-modal">
+            <div class="custom-modal-header">
+                <div class="custom-modal-icon error" id="custom-modal-icon">?</div>
+                <h3 class="custom-modal-title" id="custom-modal-title">Alert</h3>
+            </div>
+            <div class="custom-modal-message" id="custom-modal-message"></div>
+            <div class="custom-modal-actions">
+                <button class="custom-modal-btn primary" id="custom-modal-dismiss-btn">Dismiss</button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        function showCustomAlert(title, message, isError = true) {
+            const overlay = document.getElementById('custom-modal-overlay');
+            const icon = document.getElementById('custom-modal-icon');
+            document.getElementById('custom-modal-title').textContent = title;
+            document.getElementById('custom-modal-message').textContent = message;
+            
+            icon.className = 'custom-modal-icon ' + (isError ? 'error' : 'info');
+            icon.textContent = isError ? '?' : 'i';
+            
+            overlay.classList.add('active');
+        }
+
+        document.getElementById('custom-modal-dismiss-btn').addEventListener('click', () => {
+            document.getElementById('custom-modal-overlay').classList.remove('active');
+        });
+
         const timeLeftDisplay = document.getElementById('time-left');
         const startBtn = document.getElementById('start-btn');
         const stopBtn = document.getElementById('stop-btn');
@@ -625,7 +759,7 @@
 
         async function startTest() {
             if (!isFeedRunning) {
-                alert("Please start the camera feed before starting a test.");
+                showCustomAlert("Feed Stopped", "Please start the camera feed before starting a test.", true);
                 return;
             }
             const duration = getDurationFromInputs();
@@ -656,7 +790,7 @@
                 });
 
                 if (response.status === 409) {
-                    alert("A test is already in progress.");
+                    showCustomAlert("Action Denied", "A test is already in progress.", true);
                     checkServerState();
                     return;
                 }
@@ -716,11 +850,11 @@
                         isFeedRunning = false;
                     } else {
                         const data = await response.json();
-                        alert(data.status || "Could not stop feed.");
+                        showCustomAlert("Stop Failed", data.status || "Could not stop feed.", true);
                     }
                 } catch (error) {
                     console.error("Failed to stop camera feed:", error);
-                    alert("An error occurred while trying to stop the feed.");
+                    showCustomAlert("Error", "An error occurred while trying to stop the feed.", true);
                 }
             } else {
                 liveFeedImg.src = '/api/camera/feed?_=' + new Date().getTime();
@@ -771,7 +905,7 @@
                         const finishedLog = logs.find(log => log.id === currentLogId);
 
                         if (finishedLog && finishedLog.status === 'Fail' && finishedLog.failure_reason === 'Weight Fallen Down!') {
-                            alert('Test failed due to Weight Fell Down!');
+                            showCustomAlert('Test Failed', 'Test failed due to Weight Fell Down!', true);
                         }
 
                         resetUi();
