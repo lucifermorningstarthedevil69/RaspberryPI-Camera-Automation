@@ -136,6 +136,8 @@ def start_test():
         'rating': data.get('rating', ''),
         'height': data.get('height', ''),
         'weight': data.get('weight', ''),
+        'area': data.get('area', ''),
+        'diameter': data.get('diameter', ''),
         'duration': duration,
         'status': 'Running',
         'video_filename': video_filename
@@ -146,6 +148,14 @@ def start_test():
         stop_test_internally(log_id, 'Fail', reason='Weight Fallen Down!')
 
     camera = get_camera_instance()
+    
+    res_str = data.get('resolution', '1280x720')
+    try:
+        width, height = map(int, res_str.split('x'))
+        camera.reconfigure_resolution(width, height)
+    except Exception as e:
+        print(f"Failed to reconfigure resolution: {e}")
+
     stop_event = threading.Event()
     recording_thread = threading.Thread(target=camera.start_recording, args=(video_path, stop_event))
     timer = threading.Timer(duration, stop_test_internally, args=[log_id, 'Pass'])
@@ -299,6 +309,8 @@ def download_log_pdf(log_id):
         ["Sample Code:", sample_code],
         ["IS Code:", log_data.get('is_code', '3854:1997')],
         ["Sample Type:", log_data.get('sample_type', '')],
+        ["Cross-Sectional Area:", log_data.get('area', '')],
+        ["Bushing Hole Diameter:", log_data.get('diameter', '')],
         ["Rating:", log_data.get('rating', '')],
         ["Height:", log_data.get('height', '')],
         ["Weight:", log_data.get('weight', '')],
@@ -317,7 +329,7 @@ def download_log_pdf(log_id):
         ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
         ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('SPAN', (0, 6), (0, 7)), # Span 'Duration' vertically
+        ('SPAN', (0, 8), (0, 9)), # Span 'Duration' vertically
     ]))
     
     elements.append(t)

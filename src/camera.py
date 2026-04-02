@@ -16,7 +16,7 @@ def _convert_h264_to_mp4(h264_file, mp4_file, delete_h264=True):
         try:
             command = [
                 'ffmpeg',
-                '-r', '30',      # Enforce input framerate for accurate duration
+                '-framerate', '25',
                 '-i', h264_file,
                 '-c:v', 'copy',  # Fast, no re-encoding
                 '-y',            # Overwrite if exists
@@ -125,6 +125,31 @@ class Camera:
                 print(f"Stopped recording to {h264_path}.")
                 # Start background conversion to MP4
                 _convert_h264_to_mp4(h264_path, filepath)
+
+    def reconfigure_resolution(self, width, height):
+        """Seamlessly changes the main stream resolution while keeping lores stream alive."""
+        if self.is_recording:
+            print("Cannot change resolution while recording!")
+            return False
+            
+        with self.streaming_output.condition:
+            if self.is_streaming:
+                self.picam2.stop_encoder(self.stream_encoder)
+            self.picam2.stop()
+            
+            self.config = self.picam2.create_video_configuration(
+                main={"size": (width, height)},
+                lores={"size": (640, 480), "format": "YUV420"}, 
+                encode="main"
+            )
+            self.picam2.configure(self.config)
+            self.picam2.start()
+            
+            if self.is_streaming:
+                self.picam2.start_encoder(self.stream_encoder, FileOutput(self.streaming_output), name='lores')
+        
+        print(f"Camera reconfigured to {width}x{height}")
+        return True
 
     def shutdown(self):
         """Stops all camera activity and releases the hardware."""
