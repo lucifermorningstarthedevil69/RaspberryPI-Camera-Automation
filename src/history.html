@@ -670,42 +670,75 @@
                 logTableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 48px; color: var(--text-secondary);">No test logs found.</td></tr>`;
                 return;
             }
-
+            
+            // Group logs by sample_code
+            const groups = {};
             logs.forEach(log => {
-                const time = formatLogTime(log.time);
-                const videoFilename = getVideoFilename(log);
-                const isVideoAvailable = videoFilename !== null;
-
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td data-label="Time & Date">${time}</td>
-                    <td data-label="Sample / IS Code">
-                        ${log.sample_code || 'N/A'}
-                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;" title="IS Code">${log.is_code || 'N/A'}</div>
-                    </td>
-                    <td data-label="Status"><span class="status-${log.status}">${log.status || 'Unknown'}</span></td>
-                    <td data-label="Actions">
-                        <div class="btn-group">
-                            <button class="btn btn-view" data-filename="${videoFilename}" ${!isVideoAvailable ? 'disabled' : ''}>
-                                ${icons.view} View
-                            </button>
-                            <button class="btn btn-download btn-download-log" data-id="${log.id}">
-                                ${icons.download} Report
-                            </button>
-                            <button class="btn btn-download btn-download-video" data-id="${log.id}" ${!isVideoAvailable ? 'disabled' : ''}>
-                                ${icons.download} Video
-                            </button>
-                            <button class="btn btn-delete-only" data-id="${log.id}" ${!isVideoAvailable ? 'disabled' : ''}>
-                                ${icons.trash} Del Video
-                            </button>
-                            <button class="btn btn-delete-both" data-id="${log.id}">
-                                ${icons.trash} Del Both
-                            </button>
-                        </div>
-                    </td>
-                `;
-                logTableBody.appendChild(row);
+                const sc = log.sample_code || 'Unknown';
+                if (!groups[sc]) groups[sc] = [];
+                groups[sc].push(log);
             });
+
+            for (const [sampleCode, groupLogs] of Object.entries(groups)) {
+                // Determine if we should show a group header
+                if (groupLogs.length > 1) {
+                    const headerRow = document.createElement('tr');
+                    headerRow.style.backgroundColor = 'rgba(0, 122, 255, 0.05)';
+                    headerRow.innerHTML = `
+                        <td colspan="3" style="font-weight: bold; color: var(--text);">
+                            Sample Group: ${sampleCode} <span style="color: var(--text-secondary); font-size: 13px;">(${groupLogs.length} Tests)</span>
+                        </td>
+                        <td data-label="Actions">
+                            <div class="btn-group">
+                                <button class="btn btn-download btn-combine-summary" data-code="${sampleCode}">
+                                    ${icons.download} Summary PDF
+                                </button>
+                                <button class="btn btn-download btn-combine-detailed" data-code="${sampleCode}">
+                                    ${icons.download} Detailed PDF
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    logTableBody.appendChild(headerRow);
+                }
+
+                groupLogs.forEach((log, index) => {
+                    const time = formatLogTime(log.time);
+                    const videoFilename = getVideoFilename(log);
+                    const isVideoAvailable = videoFilename !== null;
+                    const testNum = groupLogs.length > 1 ? ` <span style="color: var(--primary); font-size: 11px; font-weight: bold;">(Test #${index + 1})</span>` : '';
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td data-label="Time & Date">${time}</td>
+                        <td data-label="Sample / IS Code">
+                            ${log.sample_code || 'N/A'}${testNum}
+                            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;" title="IS Code">${log.is_code || 'N/A'}</div>
+                        </td>
+                        <td data-label="Status"><span class="status-${log.status}">${log.status || 'Unknown'}</span></td>
+                        <td data-label="Actions">
+                            <div class="btn-group">
+                                <button class="btn btn-view" data-filename="${videoFilename}" ${!isVideoAvailable ? 'disabled' : ''}>
+                                    ${icons.view} View
+                                </button>
+                                <button class="btn btn-download btn-download-log" data-id="${log.id}">
+                                    ${icons.download} Report
+                                </button>
+                                <button class="btn btn-download btn-download-video" data-id="${log.id}" ${!isVideoAvailable ? 'disabled' : ''}>
+                                    ${icons.download} Video
+                                </button>
+                                <button class="btn btn-delete-only" data-id="${log.id}" ${!isVideoAvailable ? 'disabled' : ''}>
+                                    ${icons.trash} Del Video
+                                </button>
+                                <button class="btn btn-delete-both" data-id="${log.id}">
+                                    ${icons.trash} Del Both
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    logTableBody.appendChild(row);
+                });
+            }
         }
 
         logTableBody.addEventListener('click', async (event) => {
@@ -713,6 +746,7 @@
             if (!target) return;
 
             const logId = target.dataset.id;
+            const sampleCode = target.dataset.code;
             const filename = target.dataset.filename;
 
             if (target.classList.contains('btn-delete-both')) {
@@ -733,6 +767,10 @@
                 if (filename && filename !== 'null') {
                     viewVideo(filename);
                 }
+            } else if (target.classList.contains('btn-combine-summary')) {
+                if (sampleCode) window.location.href = `/api/test/logs/download_combined/${encodeURIComponent(sampleCode)}?type=summary`;
+            } else if (target.classList.contains('btn-combine-detailed')) {
+                if (sampleCode) window.location.href = `/api/test/logs/download_combined/${encodeURIComponent(sampleCode)}?type=detailed`;
             }
         });
 

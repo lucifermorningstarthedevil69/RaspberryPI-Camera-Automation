@@ -62,6 +62,7 @@
             font-weight: 700;
             margin: 0;
             background: linear-gradient(135deg, #fff 0%, #8e8e93 100%);
+            background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -550,8 +551,8 @@
                     <label>Sample Details</label>
                     <input type="text" id="sample-code" value="26EABC000" placeholder="Sample Code">
                     <select id="sample-type" style="margin-top: 8px;">
-                        <option value="Switches For Domestic And Similar Purposes">Switches For Domestic Purposes</option>
-                        <option value="Plugs and Socket-Outlets for Household and Similar Purposes">Plugs and Socket-Outlets for Household</option>
+                        <option value="Switches For Domestic And Similar Purposes">Switches For Domestic And Similar Purposes</option>
+                        <option value="Plugs and Socket-Outlets for Household Purposes">Plugs and Socket-Outlets for Household and Similar Purposes</option>
                     </select>
                 </div>
 
@@ -580,12 +581,12 @@
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
                     <div class="form-group" style="margin-bottom: 0;">
-                        <label>Cross-Sectional Area (mm²)</label>
+                        <label>Cross-Sectional Area (sq.mm)</label>
                         <select id="area">
                             <option value="0.5">0.5</option>
                             <option value="0.75">0.75</option>
                             <option value="1.0">1.0</option>
-                            <option value="1.5">1.5</option>
+                            <option value="1.5" selected>1.5</option>
                             <option value="2.5">2.5</option>
                             <option value="4.0">4.0</option>
                             <option value="6.0">6.0</option>
@@ -673,6 +674,38 @@
         </div>
     </div>
 
+    <!-- Manual Result Modal -->
+    <div class="custom-modal-overlay" id="manual-result-modal-overlay">
+        <div class="custom-modal" style="max-width: 500px;">
+            <div class="custom-modal-header">
+                <div class="custom-modal-icon info" style="background-color: rgba(0, 122, 255, 0.1); color: var(--primary);">i</div>
+                <h3 class="custom-modal-title">Manual Test Results</h3>
+            </div>
+            <div class="custom-modal-message">
+                Please enter the manual inspection results for the completed test.
+                <div style="margin-top: 16px;">
+                    <div class="form-group" style="text-align: left;">
+                        <label>B) Conductor Break near Clamping unit</label>
+                        <select id="manual-conductor-break">
+                            <option value="Pass">Pass</option>
+                            <option value="Fail">Fail</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="text-align: left; margin-bottom: 0;">
+                        <label>C) Conductor Damage</label>
+                        <select id="manual-conductor-damage">
+                            <option value="Pass">Pass</option>
+                            <option value="Fail">Fail</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="custom-modal-actions">
+                <button class="custom-modal-btn primary" id="manual-result-submit-btn">Submit Results</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         function showCustomAlert(title, message, isError = true) {
             const overlay = document.getElementById('custom-modal-overlay');
@@ -688,6 +721,54 @@
 
         document.getElementById('custom-modal-dismiss-btn').addEventListener('click', () => {
             document.getElementById('custom-modal-overlay').classList.remove('active');
+        });
+
+        let pendingLogId = null;
+
+        function showManualResultModal(logId) {
+            pendingLogId = logId;
+            document.getElementById('manual-conductor-break').value = 'Pass';
+            document.getElementById('manual-conductor-damage').value = 'Pass';
+            document.getElementById('manual-result-modal-overlay').classList.add('active');
+        }
+
+        document.getElementById('manual-result-submit-btn').addEventListener('click', async () => {
+            if (!pendingLogId) return;
+            
+            const breakResult = document.getElementById('manual-conductor-break').value;
+            const damageResult = document.getElementById('manual-conductor-damage').value;
+            
+            try {
+                const response = await fetch('/api/test/manual_result', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id: pendingLogId,
+                        conductor_break: breakResult,
+                        conductor_damage: damageResult
+                    })
+                });
+                
+                if (response.ok) {
+                    document.getElementById('manual-result-modal-overlay').classList.remove('active');
+                    const savedId = pendingLogId;
+                    pendingLogId = null;
+                    const data = await response.json();
+                    
+                    if (data.final_status === 'Fail') {
+                        const reason = data.failure_reason || 'Manual Inspection!';
+                        showCustomAlert('Test Failed', 'Test failed due to ' + reason, true);
+                    } else {
+                        showCustomAlert('Test Passed', 'Test completed successfully!', false);
+                    }
+                    resetUi();
+                } else {
+                    showCustomAlert('Error', 'Failed to save manual results.', true);
+                }
+            } catch (error) {
+                console.error("Failed to save manual results:", error);
+                showCustomAlert('Error', 'Failed to save manual results.', true);
+            }
         });
 
         const timeLeftDisplay = document.getElementById('time-left');
@@ -904,11 +985,19 @@
                         const logs = await logResponse.json();
                         const finishedLog = logs.find(log => log.id === currentLogId);
 
-                        if (finishedLog && finishedLog.status === 'Fail' && finishedLog.failure_reason === 'Weight Fallen Down!') {
-                            showCustomAlert('Test Failed', 'Test failed due to Weight Fell Down!', true);
+                        if (finishedLog && (finishedLog.status === 'Fail' || finishedLog.status === 'Pass') && !finishedLog.conductor_break) {
+                            clearInterval(statusPoller);
+                            clearInterval(timer);
+                            statusDisplay.textContent = 'Awaiting Input';
+                            recordingIndicator.style.display = 'none';
+                            stopBtn.disabled = true;
+                            showManualResultModal(currentLogId);
+                        } else {
+                            if (finishedLog && finishedLog.status === 'Fail' && finishedLog.failure_reason === 'Weight Fallen Down!') {
+                                showCustomAlert('Test Failed', 'Test failed due to Weight Fell Down!', true);
+                            }
+                            resetUi();
                         }
-
-                        resetUi();
                     }
                 }
             } catch (error) {
@@ -928,14 +1017,14 @@
             if (e.target.value === '3854:2023') {
                 sampleTypeInput.value = 'Switches For Domestic And Similar Purposes';
             } else if (e.target.value === '1293:2019') {
-                sampleTypeInput.value = 'Plugs and Socket-Outlets for Household and Similar Purposes';
+                sampleTypeInput.value = 'Plugs and Socket-Outlets for Household Purposes';
             }
         });
 
         sampleTypeInput.addEventListener('change', (e) => {
             if (e.target.value === 'Switches For Domestic And Similar Purposes') {
                 isCodeInput.value = '3854:2023';
-            } else if (e.target.value === 'Plugs and Socket-Outlets for Household and Similar Purposes') {
+            } else if (e.target.value === 'Plugs and Socket-Outlets for Household Purposes') {
                 isCodeInput.value = '1293:2019';
             }
         });
@@ -974,5 +1063,4 @@
 
     </script>
 </body>
-
 </html>

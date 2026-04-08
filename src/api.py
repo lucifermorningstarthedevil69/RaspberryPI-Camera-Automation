@@ -16,7 +16,7 @@ import re
 from src.oled_display import OLEDDisplay
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.pdfgen import canvas
 
@@ -187,6 +187,26 @@ def stop_test():
     stop_test_internally(data.get('id'), data.get('status', 'Fail'))
     return jsonify({'status': 'Test stopped'})
 
+@api.route('/test/manual_result', methods=['POST'])
+def save_manual_result():
+    data = request.get_json()
+    log_id = data.get('id')
+    conductor_break = data.get('conductor_break')
+    conductor_damage = data.get('conductor_damage')
+
+    logs = read_logs()
+    for log in logs:
+        if log.get('id') == log_id:
+            log['conductor_break'] = conductor_break
+            log['conductor_damage'] = conductor_damage
+            if conductor_break == 'Fail' or conductor_damage == 'Fail':
+                log['status'] = 'Fail'
+                if log.get('failure_reason') != 'Weight Fallen Down!':
+                    log['failure_reason'] = 'Manual Inspection Failed'
+            write_logs(logs)
+            return jsonify({'status': 'Success', 'final_status': log['status'], 'failure_reason': log.get('failure_reason', '')})
+    return jsonify({'status': 'Log not found'}), 404
+
 @api.route('/test/status', methods=['GET'])
 def get_test_status():
     with lock:
@@ -283,7 +303,16 @@ def download_log_pdf(log_id):
          actual_dur_str = set_dur_str # If passed, it completed
 
     status = log_data.get('status', 'N/A')
-    test_result = "Failure" if status == 'Fail' else "Pass"
+    failure_reason = log_data.get('failure_reason', '')
+    
+    # Logic for Slip Out: 
+    # If the automated system caught weight fall, slip out failed.
+    slip_out_result = "Fail" if failure_reason == 'Weight Fallen Down!' else "Pass"
+    
+    # Logic for Manual Checks
+    conductor_break_result = log_data.get('conductor_break', 'N/A')
+    conductor_damage_result = log_data.get('conductor_damage', 'N/A')
+
     final_status = "Unsatisfactory" if status == 'Fail' else "Satisfactory"
 
     # PDF Generation
@@ -318,11 +347,14 @@ def download_log_pdf(log_id):
         ["", f"Actual Duration: {actual_dur_str}"], # Merge cell for Duration
         ["Date:", date_val],
         ["Time:", time_val],
-        ["Test Result:", test_result],
+        ["Test Report:", ""], 
+        ["    a) Slip Out", slip_out_result],
+        ["    b) Conductor Break near Clamping unit", conductor_break_result],
+        ["    c) Conductor Damage", conductor_damage_result],
         ["Status:", final_status]
     ]
 
-    t = Table(data, colWidths=[150, 300])
+    t = Table(data, colWidths=[200, 250])
     t.setStyle(TableStyle([
         ('BOX', (0, 0), (-1, -1), 1, colors.black),
         ('GRID', (0, 0), (-1, -1), 1, colors.black),
@@ -330,6 +362,9 @@ def download_log_pdf(log_id):
         ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ('SPAN', (0, 8), (0, 9)), # Span 'Duration' vertically
+        ('SPAN', (0, 12), (1, 12)), # Span 'Test Report:' across both columns
+        ('BACKGROUND', (0, 12), (1, 12), colors.lightgrey),
+        ('FONTNAME', (0, 13), (0, 15), 'Helvetica'), # Make sub-items regular font instead of bold
     ]))
     
     elements.append(t)
@@ -364,6 +399,195 @@ def download_video(log_id):
         return jsonify({'status': 'Video file not found'}), 404
 
     return send_file(video_path, as_attachment=True)
+
+
+@api.route('/test/logs/download_combined/<sample_code>')
+def download_combined_pdf(sample_code):
+    report_type = request.args.get('type', 'summary')
+    logs = read_logs()
+    
+    matching_logs = [l for l in logs if l.get('sample_code') == sample_code]
+    matching_logs.sort(key=lambda x: x.get('time', ''))
+    
+    if not matching_logs:
+        return jsonify({'status': 'No logs found for this sample code'}), 404
+
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    elements = []
+    
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'Title',
+        parent=styles['Heading1'],
+        alignment=1, # Center
+        spaceAfter=20,
+        fontSize=16,
+        textColor=colors.black
+    )
+    
+    clean_sample = re.sub(r'[^a-zA-Z0-9_.-]', '_', sample_code)
+    datetime_str = datetime.datetime.now(IST).strftime("%Y%m%d_%H%M%S")
+
+    if report_type == 'detailed':
+        filename = f"Combined_Detailed_Report_{clean_sample}_{datetime_str}.pdf"
+        for idx, log_data in enumerate(matching_logs):
+            elements.append(Paragraph(f"Detailed Test Report #{idx+1}", title_style))
+            elements.append(Spacer(1, 20))
+            
+            time_str = log_data.get('time')
+            date_val = "N/A"
+            time_val = "N/A"
+            if time_str:
+                try:
+                    dt = datetime.datetime.fromisoformat(time_str)
+                    date_val = dt.strftime("%Y-%m-%d")
+                    time_val = dt.strftime("%H:%M:%S")
+                except: pass
+
+            set_duration = log_data.get('duration', 0)
+            set_dur_str = format_duration(set_duration)
+            actual_dur_str = "N/A"
+            if log_data.get('status') == 'Fail' and log_data.get('time') and log_data.get('end_time'):
+                try:
+                    start_dt = datetime.datetime.fromisoformat(log_data['time'])
+                    end_dt = datetime.datetime.fromisoformat(log_data['end_time'])
+                    actual_seconds = int((end_dt - start_dt).total_seconds())
+                    actual_dur_str = format_duration(actual_seconds)
+                except: pass
+            elif log_data.get('status') == 'Pass':
+                 actual_dur_str = set_dur_str 
+
+            status = log_data.get('status', 'N/A')
+            failure_reason = log_data.get('failure_reason', '')
+            slip_out_result = "Fail" if failure_reason == 'Weight Fallen Down!' else "Pass"
+            conductor_break_result = log_data.get('conductor_break', 'N/A')
+            conductor_damage_result = log_data.get('conductor_damage', 'N/A')
+            final_status = "Unsatisfactory" if status == 'Fail' else "Satisfactory"
+
+            data = [
+                ["Sample Code:", sample_code],
+                ["IS Code:", log_data.get('is_code', '3854:1997')],
+                ["Sample Type:", log_data.get('sample_type', '')],
+                ["Cross-Sectional Area:", log_data.get('area', '')],
+                ["Bushing Hole Diameter:", log_data.get('diameter', '')],
+                ["Rating:", log_data.get('rating', '')],
+                ["Height:", log_data.get('height', '')],
+                ["Weight:", log_data.get('weight', '')],
+                ["Duration", f"Set Duration: {set_dur_str}"],
+                ["", f"Actual Duration: {actual_dur_str}"], 
+                ["Date:", date_val],
+                ["Time:", time_val],
+                ["Test Report:", ""], 
+                ["    a) Slip Out", slip_out_result],
+                ["    b) Conductor Break near Clamping unit", conductor_break_result],
+                ["    c) Conductor Damage", conductor_damage_result],
+                ["Status:", final_status]
+            ]
+            t = Table(data, colWidths=[200, 250])
+            t.setStyle(TableStyle([
+                ('BOX', (0, 0), (-1, -1), 1, colors.black),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+                ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('SPAN', (0, 8), (0, 9)), 
+                ('SPAN', (0, 12), (1, 12)), 
+                ('BACKGROUND', (0, 12), (1, 12), colors.lightgrey),
+                ('FONTNAME', (0, 13), (0, 15), 'Helvetica'), 
+            ]))
+            elements.append(t)
+            
+            if idx < len(matching_logs) - 1:
+                elements.append(PageBreak())
+
+    else:
+        # Summary mode
+        filename = f"Combined_Summary_Report_{clean_sample}_{datetime_str}.pdf"
+        elements.append(Paragraph(f"Combined Summary Test Report: {sample_code}", title_style))
+        elements.append(Spacer(1, 20))
+        
+        base_log = matching_logs[0]
+        common_data = [
+            ["Sample Code:", sample_code],
+            ["IS Code:", base_log.get('is_code', '3854:1997')],
+            ["Sample Type:", base_log.get('sample_type', '')],
+            ["Cross-Sectional Area:", base_log.get('area', '')],
+            ["Bushing Hole Diameter:", base_log.get('diameter', '')],
+            ["Rating:", base_log.get('rating', '')],
+            ["Height:", base_log.get('height', '')],
+            ["Weight:", base_log.get('weight', '')],
+        ]
+        ct = Table(common_data, colWidths=[200, 250])
+        ct.setStyle(TableStyle([
+            ('BOX', (0, 0), (-1, -1), 1, colors.black),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ]))
+        elements.append(ct)
+        elements.append(Spacer(1, 40))
+        
+        summary_header = ["Test Instance", "Date", "Time", "Actual Duration", "Slip Out", "Cond. Break", "Cond. Damage", "Status"]
+        summary_data = [summary_header]
+        
+        for idx, log_data in enumerate(matching_logs):
+            time_str = log_data.get('time')
+            date_val = "N/A"
+            time_val = "N/A"
+            if time_str:
+                try:
+                    dt = datetime.datetime.fromisoformat(time_str)
+                    date_val = dt.strftime("%Y-%m-%d")
+                    time_val = dt.strftime("%H:%M:%S")
+                except: pass
+
+            set_duration = log_data.get('duration', 0)
+            set_dur_str = format_duration(set_duration)
+            actual_dur_str = "N/A"
+            if log_data.get('status') == 'Fail' and log_data.get('time') and log_data.get('end_time'):
+                try:
+                    st_dt = datetime.datetime.fromisoformat(log_data['time'])
+                    en_dt = datetime.datetime.fromisoformat(log_data['end_time'])
+                    actual_dur_str = format_duration(int((en_dt - st_dt).total_seconds()))
+                except: pass
+            elif log_data.get('status') == 'Pass':
+                 actual_dur_str = set_dur_str
+
+            st = log_data.get('status', 'N/A')
+            fr = log_data.get('failure_reason', '')
+            slip_out = "Fail" if fr == 'Weight Fallen Down!' else "Pass"
+            c_break = log_data.get('conductor_break', 'N/A')
+            c_damage = log_data.get('conductor_damage', 'N/A')
+            fs = "Unsatisfactory" if st == 'Fail' else "Satisfactory"
+            
+            summary_data.append([
+                f"#{idx+1}",
+                date_val, time_val, actual_dur_str, slip_out, c_break, c_damage, fs
+            ])
+            
+        st_table = Table(summary_data)
+        st_table.setStyle(TableStyle([
+            ('BOX', (0, 0), (-1, -1), 1, colors.black),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ]))
+        elements.append(st_table)
+
+    doc.build(elements)
+    buffer.seek(0)
+    
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name=filename,
+        mimetype='application/pdf'
+    )
 
 
 @api.route('/camera/feed')
