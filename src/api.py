@@ -130,6 +130,7 @@ def start_test():
     new_log = {
         'id': log_id,
         'time': datetime.datetime.now(IST).isoformat(),
+        'tested_by': data.get('tested_by', ''),
         'sample_code': data.get('sample_code'),
         'sample_type': data.get('sample_type', ''),
         'is_code': data.get('is_code', ''),
@@ -345,6 +346,7 @@ def download_log_pdf(log_id):
         ["Weight:", log_data.get('weight', '')],
         ["Duration", f"Set Duration: {set_dur_str}"],
         ["", f"Actual Duration: {actual_dur_str}"], # Merge cell for Duration
+        ["Tested By:", log_data.get('tested_by', 'N/A')],
         ["Date:", date_val],
         ["Time:", time_val],
         ["Test Report:", ""], 
@@ -354,6 +356,8 @@ def download_log_pdf(log_id):
         ["Status:", final_status]
     ]
 
+    test_report_idx = next(i for i, row in enumerate(data) if row[0] == "Test Report:")
+
     t = Table(data, colWidths=[200, 250])
     t.setStyle(TableStyle([
         ('BOX', (0, 0), (-1, -1), 1, colors.black),
@@ -362,9 +366,9 @@ def download_log_pdf(log_id):
         ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ('SPAN', (0, 8), (0, 9)), # Span 'Duration' vertically
-        ('SPAN', (0, 12), (1, 12)), # Span 'Test Report:' across both columns
-        ('BACKGROUND', (0, 12), (1, 12), colors.lightgrey),
-        ('FONTNAME', (0, 13), (0, 15), 'Helvetica'), # Make sub-items regular font instead of bold
+        ('SPAN', (0, test_report_idx), (1, test_report_idx)), 
+        ('BACKGROUND', (0, test_report_idx), (1, test_report_idx), colors.lightgrey),
+        ('FONTNAME', (0, test_report_idx + 1), (0, test_report_idx + 3), 'Helvetica'), 
     ]))
     
     elements.append(t)
@@ -476,6 +480,7 @@ def download_combined_pdf(sample_code):
                 ["Weight:", log_data.get('weight', '')],
                 ["Duration", f"Set Duration: {set_dur_str}"],
                 ["", f"Actual Duration: {actual_dur_str}"], 
+                ["Tested By:", log_data.get('tested_by', 'N/A')],
                 ["Date:", date_val],
                 ["Time:", time_val],
                 ["Test Report:", ""], 
@@ -484,6 +489,9 @@ def download_combined_pdf(sample_code):
                 ["    c) Conductor Damage", conductor_damage_result],
                 ["Status:", final_status]
             ]
+            
+            test_report_idx = next(i for i, row in enumerate(data) if row[0] == "Test Report:")
+            
             t = Table(data, colWidths=[200, 250])
             t.setStyle(TableStyle([
                 ('BOX', (0, 0), (-1, -1), 1, colors.black),
@@ -492,9 +500,9 @@ def download_combined_pdf(sample_code):
                 ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
                 ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
                 ('SPAN', (0, 8), (0, 9)), 
-                ('SPAN', (0, 12), (1, 12)), 
-                ('BACKGROUND', (0, 12), (1, 12), colors.lightgrey),
-                ('FONTNAME', (0, 13), (0, 15), 'Helvetica'), 
+                ('SPAN', (0, test_report_idx), (1, test_report_idx)), 
+                ('BACKGROUND', (0, test_report_idx), (1, test_report_idx), colors.lightgrey),
+                ('FONTNAME', (0, test_report_idx + 1), (0, test_report_idx + 3), 'Helvetica'), 
             ]))
             elements.append(t)
             
@@ -509,6 +517,7 @@ def download_combined_pdf(sample_code):
         
         base_log = matching_logs[0]
         common_data = [
+            ["Tested By:", base_log.get('tested_by', 'N/A')],
             ["Sample Code:", sample_code],
             ["IS Code:", base_log.get('is_code', '3854:1997')],
             ["Sample Type:", base_log.get('sample_type', '')],

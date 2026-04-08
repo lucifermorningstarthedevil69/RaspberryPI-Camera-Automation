@@ -552,8 +552,13 @@
                     <input type="text" id="sample-code" value="26EABC000" placeholder="Sample Code">
                     <select id="sample-type" style="margin-top: 8px;">
                         <option value="Switches For Domestic And Similar Purposes">Switches For Domestic And Similar Purposes</option>
-                        <option value="Plugs and Socket-Outlets for Household Purposes">Plugs and Socket-Outlets for Household and Similar Purposes</option>
+                        <option value="Plugs and Socket-Outlets for Household and Similar Purposes">Plugs and Socket-Outlets for Household and Similar Purposes</option>
                     </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Tested By</label>
+                    <input type="text" id="tested-by" placeholder="Operator Name" value="">
                 </div>
 
                 <div class="form-group">
@@ -779,6 +784,7 @@
         const sampleCodeInput = document.getElementById('sample-code');
         const sampleTypeInput = document.getElementById('sample-type');
         const isCodeInput = document.getElementById('is-code');
+        const testedByInput = document.getElementById('tested-by');
         const ratingInput = document.getElementById('rating');
         const heightInput = document.getElementById('height');
         const weightInput = document.getElementById('weight');
@@ -835,7 +841,7 @@
             recordingIndicator.style.display = 'flex';
             startBtn.disabled = true;
             stopBtn.disabled = false;
-            [hoursInput, minutesInput, secondsInput, sampleCodeInput, sampleTypeInput, isCodeInput, ratingInput, heightInput, weightInput, areaInput, diameterInput, cameraResolutionInput, resetBtn, toggleFeedBtn].forEach(el => el.disabled = true);
+            [hoursInput, minutesInput, secondsInput, sampleCodeInput, sampleTypeInput, testedByInput, isCodeInput, ratingInput, heightInput, weightInput, areaInput, diameterInput, cameraResolutionInput, resetBtn, toggleFeedBtn].forEach(el => el.disabled = true);
         }
 
         async function startTest() {
@@ -857,6 +863,7 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
+                        tested_by: testedByInput.value,
                         sample_code: sampleCodeInput.value,
                         sample_type: sampleTypeInput.value,
                         is_code: isCodeInput.value,
@@ -917,7 +924,7 @@
             recordingIndicator.style.display = 'none';
             startBtn.disabled = false;
             stopBtn.disabled = true;
-            [hoursInput, minutesInput, secondsInput, sampleCodeInput, sampleTypeInput, isCodeInput, ratingInput, heightInput, weightInput, areaInput, diameterInput, cameraResolutionInput, resetBtn, toggleFeedBtn].forEach(el => el.disabled = false);
+            [hoursInput, minutesInput, secondsInput, sampleCodeInput, sampleTypeInput, testedByInput, isCodeInput, ratingInput, heightInput, weightInput, areaInput, diameterInput, cameraResolutionInput, resetBtn, toggleFeedBtn].forEach(el => el.disabled = false);
             currentLogId = null;
         }
 
@@ -964,6 +971,7 @@
                         sampleCodeInput.value = data.log.sample_code || '';
                         sampleTypeInput.value = data.log.sample_type || '';
                         isCodeInput.value = data.log.is_code || '';
+                        testedByInput.value = data.log.tested_by || '';
                         ratingInput.value = (data.log.rating || '').replace(/\s*A$/, "");
                         heightInput.value = (data.log.height || '').replace(/\s*mm$/, "");
                         weightInput.value = (data.log.weight || '').replace(/\s*N$/, "").replace(/\s*g$/, "");
@@ -1017,14 +1025,14 @@
             if (e.target.value === '3854:2023') {
                 sampleTypeInput.value = 'Switches For Domestic And Similar Purposes';
             } else if (e.target.value === '1293:2019') {
-                sampleTypeInput.value = 'Plugs and Socket-Outlets for Household Purposes';
+                sampleTypeInput.value = 'Plugs and Socket-Outlets for Household and Similar Purposes';
             }
         });
 
         sampleTypeInput.addEventListener('change', (e) => {
             if (e.target.value === 'Switches For Domestic And Similar Purposes') {
                 isCodeInput.value = '3854:2023';
-            } else if (e.target.value === 'Plugs and Socket-Outlets for Household Purposes') {
+            } else if (e.target.value === 'Plugs and Socket-Outlets for Household and Similar Purposes') {
                 isCodeInput.value = '1293:2019';
             }
         });
@@ -1063,4 +1071,5 @@
 
     </script>
 </body>
+
 </html>
